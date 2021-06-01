@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="roomCast">
+  <title>portals</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="roomcast_style.css">
+
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+
+  <style>
+  .right 
+  {
+      width: 920px;
+  }
+.form-radio
+{
+     -webkit-appearance: none;
+     -moz-appearance: none;
+     appearance: none;
+     display: inline-block;
+     position: relative;
+     background-color: white; /*#f1f1f1;*/
+     color: #666;
+     top: 10px;
+     height: 30px;
+     width: 30px;
+     border: 0;
+     border-radius: 50px;
+     cursor: pointer;     
+     margin-right: 7px;
+     outline: none;
+     margin-top: -7px;
+}
+.form-radio:checked::before
+{
+     position: absolute;
+     font: 20px/1 'Open Sans', sans-serif, bold;
+     left: 9px;
+     top: 4px;
+     content: '\02143';
+     transform: rotate(40deg);
+}
+
+span {
+  cursor: pointer;
+  background-color: transparent;
+}
+
+
+.upper_right {
+  color: darkgray;
+    position:absolute !important;
+    width: 0;
+    height: 0;
+    top:10px;
+    right:200px;
+    font-size: 150%;
+    font-style:italic;
+    margin-right: 30px;
+    z-index: 900;
+}
+
+
+  </style>
+
+<script type="text/javascript">
+
+
+  query_parameters = NUTELLA.parseURLParameters();
+  nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+  var my_portals =[];;
+  var includes = [];
+
+  // pair this with showing new portal.
+  var blank; 
+
+
+  $(function () {
+
+  $("#wrapper").draggable({
+    cancel : '.no-drag'
+  });
+
+
+    $( document ).tooltip({
+      disabled: false
+    });
+
+
+    // blank = top.build_URL({type:'roomcast',link:'blank.html',version:''}); 
+    // make local copies of appropriate portals, store in (global) my_portals
+    // console.log(top.portals);
+
+
+    my_portals = JSON.parse(JSON.stringify(top.portals)); 
+
+    // build the portal list
+
+    // console.log(my_portals);
+    build_portals_list();
+
+    // for roomcast_ and add_managers, make portal list sortable
+
+    $('#list').sortable({handle: 'button', cancel: '',
+        stop: function(event,ui){re_sort();}});
+
+
+  })
+
+  function build_portals_list(){
+    $('#list').empty();
+    for (var i=0; i<my_portals.length; i++) { 
+      var item = my_portals[i];
+      var text = item.printName;
+      // if (item.version != '') text += ' [' + item.version + ']';
+      
+      if (item.type == 'system' || item.type == 'application') 
+        $('#list').append('<li hidden><button class="notcurrent" name="' + item.ID + '">' + text + '</button></li>');
+      else   
+        $('#list').append('<li><button class="notcurrent" name="' + item.ID + '">' + text + '</button></li>');
+    }; 
+    // attach event handlers
+
+    $('#list li button').click(function(){ 
+        $('#list li button').attr('class', 'notcurrent');
+        $(":radio").prop("disabled", true);
+        $(this).attr('class','current');
+
+        // find the ID of the clicked portal
+        var selected_portal_ID = $(this).attr('name');
+        var portal = my_portals.find(function(item){
+          return (selected_portal_ID == item.ID)
+        });
+        show_info(portal); 
+        $('#right_header').text(portal.printName);
+        $('#delete').show();
+        $('#cancel').hide(); 
+    })
+  }
+
+  // function zap_preview(){ 
+  //   $('#preview').prop('src',blank);
+  // }
+
+  // function show_preview(portal){ 
+  //   var URL = top.build_URL(resource);
+  //   // alert ($('#preview').prop('src'));
+  //   // alert (URL);
+  //   if (top.strip_trailing_slash($('#preview').attr('src')) == top.strip_trailing_slash(URL)) return;
+  //   $('#preview').on('load',function(){
+  //     $('#preview').prop('src',URL);
+  //     $('#preview').off('load');
+  //   });
+  //   zap_preview();
+  // }
+   
+  // function is_on_includes_list(resource_id) {
+  //   return includes.includes(resource_id);
+  // }
+
+  function show_info(portal){ 
+    $('#ID').val(portal.ID);
+    if(top.portal.type == 'designer' && top.show_portal_type(portal)) {
+      $(':radio').prop('checked', false);
+      $('#' + portal.type).prop('checked',true);
+      $('#type').show();
+      $('#savedeleterow').show();
+      $('#info').css('pointer-events','auto');
+      $('#description').css('pointer-events','auto');
+      $('#printName').css('pointer-events','auto');
+    } else {
+      $('#type').hide();
+      $('#savedeleterow').hide();
+      $('#description').css('pointer-events','none');
+      $('#printName').css('pointer-events','none');
+    }
+    if (portal.type == 'designer' || portal.type == 'educator') $('#passwordrow').hide(); else $('#passwordrow').show();
+    $('#printName').val(portal.printName);
+    $('#description').val(portal.description);
+    $('#pw').val(portal.pw);
+    $('#info').show(); 
+  }
+
+  function re_sort(){
+    var temp_portals = [];
+    for (var i=0; i<my_portals.length; i++){
+      var ID = $('#list li:eq(' + i + ') button').attr('name');
+      var portals = my_portals.find(function(item){
+        return (item.ID == ID);});      
+      temp_portals.push(portals);
+    }
+    my_portals = temp_portals;
+    update_DB_portals();
+  }
+
+
+  // $(":radio:checked" ).prop('id')
+
+
+
+  function save_portal(){
+    if (!$(":radio").is(":checked")) {
+      top.show_message ('please select a portal type');
+      return;
+    }
+    var portal = {    ID: Number($('#ID').val()),
+                      type: $(":radio:checked" ).prop('id'),
+                      printName: $('#printName').val(),
+                      description: $('#description').val(),
+                      pw: $('#pw').val()
+                    };
+    if (portal.printName == '') {top.show_message('The portal name cannot be blank.');return;}               
+                   
+    var dup_check = my_portals.filter(function(item){return(item.printName == portal.printName && item.ID != portal.ID)});
+    if (dup_check.length != 0) {top.show_message('That portal name is already in use. Please choose another.'); return;} ;            
+
+    var portal_index = my_portals.findIndex(function(item){
+      return(item.ID == portal.ID);
+    });
+    $('#right_header').text(portal.printName);
+
+    if (portal_index == -1) {
+      my_portals.push(portal);
+      build_portals_list();
+      $('#list').animate({scrollTop:$('#list').height()}, 'slow');                
+      $('#list :last-child button').click();
+    }
+    else my_portals[portal_index] = portal;    
+    // show_preview(resource);
+    // $('#list :eq(' + resource_index + ') button').attr('name',resource.printName);
+    $('.current').html(portal.printName);
+    update_DB_portals();                
+  }
+
+  function delete_portal(){ 
+    // if (!window.confirm("Are you sure?")) return;
+    var portal_index = my_portals.findIndex(function(item){
+      return (item.ID == $('#ID').val());});      
+    my_portals.splice(portal_index,1);
+    build_portals_list();
+    $('#right_header').html('&nbsp;');
+
+    // zap_preview();
+    $('#info').hide();
+    update_DB_portals();                
+  };
+
+  function add_portal(){
+    nutella.net.request('get_id',{},function(message){
+     var new_portal =  {     ID: Number(message),
+                             type: 'unknown',
+                             printName: 'new portal',
+                             description: '',
+                             pw: ''
+                          };
+
+      $('#list li button').attr('class', 'notcurrent');
+      $(":radio").prop("disabled", false);
+      show_info(new_portal);
+      $('#printName').select();
+      $('#delete').hide();
+      $('#cancel').show();
+      $('#right_header').text('new portal');
+    });
+  }
+
+
+
+  function update_DB_portals(){
+    // nutella.net.publish('portal_update',{cluster:top.cluster, portals:my_portals});
+
+    var cluster_portals = my_portals;
+    nutella.net.request('set_cluster_portals', {cluster: top.cluster_name, cluster_portals:cluster_portals}, function(message){
+      if (message == 'fail') top.error ('attempt to update cluster portals failed');
+    }); 
+  }
+  
+  function cancel(){
+    $('#delete').show();
+    $('#info').hide();
+    $('#right_header').html('&nbsp;');
+  }
+
+ function toggle_tooltips(){
+  if($( document ).tooltip( "option", "disabled" )) {
+    $(document).tooltip("enable");
+    $('#tooltip_button').text ('hide help');
+  }
+  else {
+    $(document).tooltip("disable");
+    $('#tooltip_button').text ('show help');
+  }
+ }
+
+
+</script>
+</head>
+
+
+
+<body >
+  <p class="bet_time">roomCast 2.0</p>
+      <div id='wrapper' class="upper_right"><button id="tooltip_button" title="Click here to turn pop ups like this on or off. You can drag this button somewhere else if it's in your way." onclick="toggle_tooltips();" class="action_button">hide help</button>
+      </div>
+        <div class="left">
+    <span title="This is the list of portals through which your users can log in. Choose one to view or edit, or define a new portal." class="column_header">portals</span>
+
+    <ul class="list_ul" id='list'></ul>
+    <ul class="list_ul" >
+      <li>
+        <button title="Click here to define a new portal." class="action_button" id="add" onclick="add_portal();">new portal</button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="right">
+        <span id='right_header' class="column_header">&nbsp;</span>
+<ul><li>
+    <table hidden id="info">
+      <tr hidden>
+        <td align=right class='label_col'> ID </td>
+        <td align=left>
+          <input id="ID" type="text" class="data_entry"> 
+        </td>
+      </tr>
+      <tr id="descriptionrow">
+        <td align=right> <span title="Use this field to provide a description of your portal. Pre-defined portals are already described.">info </span></td>
+        <td align=left>
+          <textarea id="description" type="text" rows=7 class="data_entry">  </textarea>
+        </td>
+      </tr>
+       <tr id="labelrow">
+        <td align=right> <span title="Use this field to provide a label for your portal.">label </span></td>
+        <td align=left>
+          <input id="printName" type="text" class="data_entry">  
+        </td>
+      </tr>
+      <tr id="type">
+        <td align=right> <span title="Select 'learner' if the portal will be used by students, 'public' if the portal will be used on public devices, or 'partner' for other kinds of users (e.g., researchers, domain experts, developers). Portal types cannot be changed after a portal has been saved; if you need to change the type, delete the portal and recreate it, specifying the desired type.">type </span></td>
+        <td style="vertical-align:middle;" align=center style="font-size:80%;">
+          <input type="radio" class="form-radio" name="type" id="learner" value="learner"> learner
+          <input type="radio" class="form-radio" name="type" id="public" value="public"> public 
+          <input type="radio" class="form-radio" name="type" id="partner" value="partner"> partner 
+        </td>
+      </tr>
+      <tr id="passwordrow">
+        <td align=right> <span title="Specify a password that users of this portal must provide. If you leave this blank, no password will be required to use this portal.">pw </span></td>
+        <td align=left>
+          <input id="pw" type="text" class="data_entry">  
+        </td>
+      </tr>
+     <tr id="savedeleterow">
+        <td align=right>  </td>
+        <td align=center>
+          <button  class="action_button" id="save" onclick="save_portal();" > save portal </button>
+          <button  class="action_button" id="delete" onclick="delete_portal();" > delete portal </button>
+          <button id="cancel" class="action_button" onclick="cancel();" > cancel </button>
+
+        </td>
+      </tr>
+
+    </table>
+  </li></ul>
+    </div>
+</body>
+</html>
+
+
+

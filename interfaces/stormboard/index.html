@@ -1,0 +1,556 @@
+<!doctype html>
+<html>
+<head>
+	<title>Brainstorm</title>
+
+	<link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css" rel="stylesheet"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+
+
+	<script src="nutella_lib.js" type="text/javascript"></script>
+  	<script src="webfont.js"></script>
+  	<link rel="stylesheet" type="text/css" href="mystyle.css">
+  	<style>
+
+  		html {
+  			overflow: hidden;
+  		}
+
+		#brainstorm {
+			position: relative;
+			height: 100vh;
+			width: 100vw;
+			/*overflow: hidden;*/
+/*			height: 99vh;
+			width: 99vw;
+*/		}
+
+		span {
+			text-align: center;
+			margin-left: -.5vw;
+			margin-right: -.5vw;
+			margin-bottom: .5vh;
+			/*padding-left: .5vw;*/
+			padding-bottom: .5vh;
+			font-size: 1.7vw;
+			display: block;
+			/*width:100%;*/
+			background-color: white;
+			color: white;
+			filter: contrast(120%);
+		}
+
+		.movingDiv { 
+			border: 1px solid black;
+			width: 20vw;
+			font-size: 1.7vw;
+			cursor: pointer;
+			border-radius: 8px;
+			padding-left: .5vw;
+			padding-right: .5vw;
+			padding-bottom: .5vh;
+			background: #dddddd;
+			color: black;
+			top: 10vh;
+			left: 10vw;
+		    overflow: hidden;
+		    position: absolute;
+		    /*max-width: 'none';*/
+		}
+
+
+		#trashcan {
+/*			margin-right: 100px;
+			margin-bottom: 100px;
+*/			right: 5px;
+			bottom: 5px;
+			z-index: 1;
+			position: absolute;
+/*			  max-width:25%;
+			  max-height:25%;
+*/
+			height: 12vh;
+			width: auto;		}
+
+		#button_div {
+			left: 5px;
+			bottom: 5px;
+			z-index: 1;
+			position: absolute;
+			font-size: 2vw;
+
+		}
+
+		#menu_div {
+			border: none;
+			/*width: 100%;*/
+			/*text-align: center;*/
+			left: 0;
+			right: 0;
+			top: 0;
+			margin: auto;
+			/*cursor: pointer;*/
+/*			border-radius: 8px;
+			padding-left: .5vw;
+			padding-right: .5vw;
+			padding-bottom: .5vh;
+			background: #dddddd;
+			color: black;
+*/			/*top: 2vh;
+			left: 35vw;
+			width: 30vw;*/
+/*		    overflow: hidden;
+*/		    position: absolute;
+
+		}
+
+		#readonly_name {
+			border: none;
+			/*width: 100%;*/
+			/*text-align: center;*/
+			left: 0;
+			right: 0;
+			top: 1vh;
+			margin: auto;
+			/*cursor: pointer;*/
+/*			border-radius: 8px;
+			padding-left: .5vw;
+			padding-right: .5vw;
+			padding-bottom: .5vh;
+			background: #dddddd;
+			color: black;
+*/			/*top: 2vh;
+			left: 35vw;
+			width: 30vw;*/
+/*		    overflow: hidden;
+*/		    position: absolute;
+			font-size: 3vw;
+
+		}
+
+		#label_div{
+
+			  /*display: block;*/
+			  /*width: 100%;*/
+			  min-width: 250px;
+			  min-height: 90px;
+			  /*max-height: 100px;*/
+			  height: 9vh;
+			  outline: 0;
+			  padding: 3px;
+			  border: 1px solid #DADADA;
+			  overflow: hidden;
+			  white-space: nowrap;
+
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			margin: auto;
+			position: absolute;
+			z-index: 1000000;
+/*			height: auto;
+*/			/*width: 0;*/
+		}
+
+		#brainstorm_div{
+
+			  /*display: block;*/
+			  /*width: 100%;*/
+			  min-width: 250px;
+			  min-height: 90px;
+			  /*max-height: 100px;*/
+			  height: 9vh;
+			  outline: 0;
+			  padding: 3px;
+			  border: 1px solid #DADADA;
+			  overflow: hidden;
+			  white-space: nowrap;
+			  background-color: darkgray;
+			  border-radius: 0px;
+
+
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			margin: auto;
+			position: absolute;
+			z-index: 1000000;
+/*			height: auto;
+*/			/*width: 0;*/
+		}
+
+		.ui-menu {  }
+
+		#menu {
+			background: transparent;
+			color: white;
+			border: none;
+			font-size: 3vw;
+			/*width: 30vw;*/
+		}
+/*		#zap {
+
+		}
+
+		#label_button {
+			left: 10vw;
+			bottom: 5px;
+			z-index: 1;
+			position: absolute;
+
+		}
+*/
+
+		#label{
+
+			width: 15vw;
+			font-size: 2vw;
+			margin-bottom: .5vh;
+		}
+
+		#brainstorm_name {
+
+			width: 10vw;
+			font-size: 2vw;
+			margin-bottom: .5vh;
+		}
+
+
+
+
+	</style>
+	<script type="text/javascript">
+
+		var items = [];
+		var z = 100;
+		var brainstorm_name = 'brainstorm?';
+		var names = [];
+
+		var query_parameters = NUTELLA.parseURLParameters();
+		var nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+		var version = 'standard';
+		if (query_parameters.hasOwnProperty('version') && query_parameters.version == 'readonly') version = 'readonly';
+
+		function zap() {
+			if (brainstorm_name == 'brainstorm?') return
+			items = [];
+			sync();
+			draw();
+		}
+
+		function sync() { 
+			// z = 1;
+			// items.sort(function(a,b){
+			// 	return ((a.z < b.z) ? 1 : -1);
+			// });
+			for (var i=0; i<items.length; i++) {
+		  		// all these will be in vh, vw units
+		  		items[i].height = $('.movingDiv')[i].style.height.slice(0,-2);
+		  		items[i].width = $('.movingDiv')[i].style.width.slice(0,-2);
+		  		items[i].top = $('.movingDiv')[i].style.top.slice(0,-2);
+		  		items[i].left = $('.movingDiv')[i].style.left.slice(0,-2);
+		  		items[i].z = $('.movingDiv')[i].style.zIndex;
+		  		items[i].visibility = $('.movingDiv')[i].style.visibility;
+		  	};
+		  	nutella.net.request('set_brainstorm',{name: brainstorm_name, items: items},function(){
+		  		// console.log('ended sync')
+		  	});
+		}
+
+		function px_to_vw (px) {
+			return (100*px)/$(window).width();
+		}
+
+		function px_to_vh (px) {
+
+			return (100*px)/$(window).height();
+		}
+
+		function perc2color(perc) {
+			var r, g, b = 0;
+			r = Math.round(perc/100 * 256);
+			b = Math.round((100-perc)/100 * 256);
+			result = 'rgba(' + r + ',0,' + b + ',1)';
+			// var h = r * 0x10000 + b * 0x1; 
+			// var result = '#' + ('000000' + h.toString(16)).slice(-6);
+			return result;
+		}
+
+		function new_label() {
+			if (brainstorm_name == 'brainstorm?') return;
+			$('#label_div').show();
+			$('label_div').css({
+		        display: 'inline-block',
+		        height: 'auto'
+		    });
+		    $('#label').focus();
+		}
+
+		function create_label() {
+			$('#label_div').hide();
+			items.push({time: Date.now(), top: Math.random()*78, left: Math.random()*78, height: 'none', width: 'none', portal: $('#label').val(), name: '', string: '', z: ++z, visibility: 'visible', type: 'label'});
+			$('#label').val('');
+			draw();
+			sync();			
+		}
+
+
+		function draw(){ 
+			var num_items = 0;
+			for (var i=0; i<items.length; i++){
+				if (items[i].visibility == 'visible') num_items++;
+			}
+			$('#brainstorm').empty();
+			var color_count = 0;
+			for (var i=0; i< items.length; i++) {
+				var item = items[i];
+				var html = '';
+				if (item.type == 'contribution') html += '<div class="movingDiv rs">';
+				else html += '<div class="movingDiv">';
+				html += '<span>';
+				html += item.portal;
+				if (item.type == 'contribution') html += ': ' + item.name;
+				html += '</span>';
+				if (item.type == 'contribution') html += item.string;
+				html += '</div>';
+				$("#brainstorm").append(html);//.resizable();
+				$('.movingDiv')[i].style.top = item.top + 'vh';
+				$('.movingDiv')[i].style.left = item.left + 'vw';
+				$('.movingDiv')[i].style.height = item.height + 'vh';
+				if (i != item.length-1) $('.movingDiv')[i].style.width = item.width + 'vw';
+				$('.movingDiv')[i].style.zIndex = item.z;
+				if (item.z > z) z = item.z;
+				$('.movingDiv')[i].style.visibility = item.visibility;
+				if (item.visibility == 'visible') color_count++;
+				$('.movingDiv')[i].children[0].style.color = perc2color(100 * (color_count/num_items));
+
+				if (items[i].type == 'label') {
+					$('.movingDiv')[i].style.height = 'auto';
+					$('.movingDiv')[i].children[0].style.color = 'darkgray';
+					$('.movingDiv')[i].children[0].style.backgroundColor = 'transparent';
+					$('.movingDiv')[i].style.backgroundColor = 'transparent';
+					$('.movingDiv')[i].style.border = 'none';
+					$('.movingDiv')[i].style.width = 'auto';
+					$('.movingDiv')[i].style.resize = 'none';
+					$('.movingDiv')[i].children[0].style.fontSize = '3vw';
+
+				}
+
+
+
+			}
+
+			if (version == 'standard'){
+				$(".movingDiv.rs").resizable();
+				$(".movingDiv").draggable({ containment: "#brainstorm", scroll: false });
+
+				// click handler
+
+				$( ".movingDiv" ).click(function(e,ui){
+					this.style.zIndex = ++z;
+				});
+
+				// resize handler
+
+				var resizeTimer;
+				var resizing = false;
+
+				$('.movingDiv.rs').on('resize', function(e) {
+					if (!resizing) $(e.currentTarget).css('z-index', ++z);
+					resizing = true;				
+					clearTimeout(resizeTimer);
+					resizeTimer = setTimeout(function() {
+						$(e.currentTarget).css('height', px_to_vh($(e.currentTarget).height()) + 'vh');
+						$(e.currentTarget).css('width', px_to_vw($(e.currentTarget).width()) + 'vw');
+						sync();
+						resizing = false;
+					}, 250);
+				});
+
+				// drag handler
+
+				$( ".movingDiv" ).draggable({
+					start: function(e,ui){
+						$(ui.helper.context).css('z-index', ++z);
+					},
+					stop: function(e,ui) {
+						if 	(	(Number($(ui.helper.context).css('right').slice(0,-2)) < 20) &&
+								(Number($(ui.helper.context).css('bottom').slice(0,-2)) < 20)    
+							) // delete note
+							{
+								$(ui.helper.context).css('visibility','hidden');
+							}	
+						$(ui.helper.context).css('top', px_to_vh(Number($(ui.helper.context).css('top').slice(0,-2))) + 'vh');
+						$(ui.helper.context).css('left', px_to_vw(Number($(ui.helper.context).css('left').slice(0,-2))) + 'vw');
+						sync();
+					}
+				});
+			}
+		};
+
+		function load_brainstorm() {
+			nutella.net.request('get_brainstorm',brainstorm_name,function(message){ 
+				if (message == 'name not found') items = [];
+				else items = message;
+
+		    // $( "#menu" ).menu();
+
+				
+				draw();
+
+				if (version == 'standard'){
+
+
+					nutella.net.subscribe('new_brainstorm_item',function(message){					
+						items.push({time: Date.now(), top: Math.random()*78, left: Math.random()*78, height: 'none', width: 'none', portal: message.portal, name: message.name, string: message.string, z: ++z, visibility: 'visible', type: 'contribution'});
+						draw();
+						sync();
+					});
+
+				} else if (version == 'readonly') {
+
+					$('#brainstorm').css('pointer-events','none');
+					nutella.net.subscribe('brainstorm_push',function(message){
+						if (brainstorm_name == 'brainstorm?') return;
+						items = [];					
+						items = message.items;
+						draw();
+					});
+
+				}
+
+			});
+		}					
+
+		function delete_brainstorm() {
+			if (brainstorm_name == 'brainstorm?') return;
+			nutella.net.publish('delete_brainstorm',brainstorm_name);
+			location.reload(true);
+		}
+		
+
+		function new_brainstorm() { 
+			$('#brainstorm_div').show();
+			$('brainstorm_div').css({
+		        display: 'inline-block',
+		        height: 'auto'
+		    });
+		    $('#brainstorm_name').focus();
+		}
+
+		function create_brainstorm() {
+			var new_name = $('#brainstorm_name').val();
+			for (var i=0; i<names.length; i++){
+				if (names[i] == new_name) {
+					alert ('name already in use. choose a different name.');
+					return;
+				}
+				brainstorm_name = new_name;
+			}
+			nutella.net.request('new_brainstorm',new_name,function(){
+				$('#menu').append('<option><div>' + new_name + '</div></option>');
+				$('#menu').val(new_name);
+				$('#brainstorm_div').hide();
+				load_brainstorm();
+			})
+			$('#brainstorm_name').val('');
+			nutella.net.publish('switch_brainstorms',brainstorm_name);
+
+		}
+
+		function setup () {
+			$('#menu').empty();
+			$('#menu').append('<option disabled><div>brainstorm?</div></option>');
+			brainstorm_name = 'brainstorm?';
+			nutella.net.request('get_brainstorms',{},function(message){ 
+				names = message;
+				for (var i=0; i<names.length; i++){
+					$('#menu').append('<option><div>' + names[i] + '</div></option>');
+				}
+				$('#menu').change(function(){ 				
+
+					// if ($(this).val() == 'brainstorm?') {return;
+					brainstorm_name = $(this).val();
+					nutella.net.publish('switch_brainstorms',brainstorm_name);
+					load_brainstorm();
+				});
+			})
+
+		}
+
+
+		$(function(){
+
+			if (query_parameters.version == 'readonly') {
+				$('#not_readonly').hide();
+				nutella.net.request('what_is_current_brainstorm',{},function(message){ 
+					brainstorm_name = message;
+					$('#menu_div').hide();
+					$('#button_div').hide();
+					$('#trashcan').hide();
+					$('#readonly_name').append(message);
+					$('#readonly_name').show();
+					if (message != 'brainstorm?') load_brainstorm();
+				});
+
+				nutella.net.subscribe('switch_brainstorms',function(message){	
+					brainstorm_name = message;
+					$('#readonly_name').empty();
+					$('#readonly_name').append(brainstorm_name);				
+					load_brainstorm();
+				});
+
+			} else {
+				nutella.net.publish('switch_brainstorms','brainstorm?');
+				nutella.net.handle_requests('what_is_current_brainstorm',function(){
+					return brainstorm_name;
+				});
+			}
+
+			setup();
+
+
+		})
+
+
+
+
+
+	</script>
+</head>
+<body >
+	<div id='brainstorm'>
+	</div>
+	<div id='not_readonly'>
+		<!-- <img src="trashcan.png" height='80' width='50'> -->
+		<img id='trashcan' src="trashcan.png">
+		<div id='button_div'>
+			<button id='zap' onclick='zap();'>clear</button>
+			<button id='label_button' onclick='new_label();'>label</button>
+			<button onclick="new_brainstorm();">new brainstorm</button>
+			<button onclick="delete_brainstorm();">delete brainstorm</button>
+		</div>
+	</div>
+	<div  hidden class='movingDiv' id='label_div' align=center>
+		Label: <input type=text id='label'><br>
+		<button onclick="$('#label_div').hide();">cancel</button>
+		<button onclick="create_label();">create</button>
+	</div>
+	<div  hidden class='movingDiv' id='brainstorm_div' align=center>
+		Brainstorm: <input type=text id='brainstorm_name'><br>
+		<button onclick="$('#brainstorm_div').hide();">cancel</button>
+		<button onclick="create_brainstorm();">create</button>
+	</div>
+	<div id='menu_div' align=center>
+		<select id="menu">
+		</select>
+	</div>
+	<div hidden id='readonly_name' align=center>
+	</div>
+				
+</body>
+</html>

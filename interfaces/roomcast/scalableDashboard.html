@@ -1,0 +1,431 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="roomCast">
+  <title>portals</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="roomcast_style.css">
+
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+
+  <style>
+
+
+
+body {
+  font-size: 5vw !important;
+}
+
+button {
+  font-size: 2vw !important;
+
+}
+
+
+
+:root {
+
+/* default styling */
+
+    --page_background: #374048;
+    --page_text: white;
+    --status_bar_text: #d3d8de;
+    --resource_bar_background: #9ba5b0;
+    --resource_bar_text: black;
+
+
+    --item_button_background: #d3d8de;
+    --item_button_text: black;
+    --item_button_border: var(--page_background);
+
+    --highlighted_item_button_background: black;
+    --highlighted_item_button_text: white;
+    --highlighted_item_button_border: white;
+ 
+    --action_button_background: var(--item_button_background);
+    --action_button_text: black;
+    --action_button_border: var(--action_button_background);
+
+    --active_action_button_background: black;
+    --active_action_button_text: white;
+    --active_action_button_border: var(--highlighted_action_button_background);
+
+    --disabled_action_button_background: lightgray;
+    --disabled_action_button_text: gray;
+    --disabled_action_button_border: var(--disabled_action_button_background);
+
+    --input_background: white;
+
+
+
+    --column_header_font_size: 2.5vw;
+    /*--left_div_width: 285px;*/
+    /*--right_div_width: 1000px;*/
+    --item_button_font_size: 1.2vw;
+    --action_button_font_size: 1.2vw;
+    --info_table_label_size: 1vw;
+    --info_table_cell_size: 15pt;
+    --info_table_left_col_width: 150px;
+
+
+}
+
+.bet_time {
+  color: darkgray;
+    position:absolute;
+    bottom:5;
+    right:0;
+    font-size: 2vw;
+    font-style:italic;
+    margin-right: 30px;
+}
+
+
+body 
+{
+    background: var(--page_background);
+    color: var(--page_text);
+    font-family: "Arial";
+    overflow: auto;
+}
+
+.column_header
+{
+    margin-left: 15px;
+    margin-bottom: -2vw;
+}
+
+/* by default, all buttons are "item" buttons */
+
+a
+{
+    cursor: pointer;
+}
+
+input[type=text], textarea
+{
+  background-color: var(--input_background); 
+  border: none; 
+}
+
+
+/* item buttons are current or non-current */
+
+.notcurrent 
+{
+    background-color: var(--item_button_background);
+    color: var(--item_button_text);
+    border: 2px var(--item_button_border);
+} 
+
+.current 
+{
+    background-color: var(--highlighted_item_button_background);
+    color: var(--highlighted_item_button_text);
+    border: 2px solid var(--highlighted_item_button_border);
+}
+
+div {
+      width: auto !important;
+      /*border:1px solid white;*/
+}
+
+.action_button 
+{
+    cursor: pointer !important;
+    border-radius:1em;
+    /*margin-top: 5px;*/
+    width: 15vw;
+    /*border: 2px solid var(--action_button_border);*/
+    background-color: var(--action_button_background);
+    color: var(--action_button_text);
+    /*padding: 3px 0px;*/
+    /*font-size: var(--action_button_font_size);*/
+
+}
+
+.action_button:disabled 
+{
+    background-color: var(--disabled_action_button_background);
+    color: var(--disabled_action_button_text);
+    border: 2px solid var(--disabled_action_button_border);
+}
+
+.action_button:active
+{
+    background-color: var(--active_action_button_background);
+    color: var(--active_action_button_text);
+    border: 2px solid var(--active_action_button_border);
+}
+
+/* these two (poorly named) classes are used to achieve
+the side-by-side div setup used in most of the roomcast
+pages */
+
+.right {
+  left: 100 !important;
+width: auto !important;
+    text-align:center;
+    height:100%;
+    margin-right:10vw;
+    display: inline-block;
+     margin-top:-1vw !important;
+
+    /*width: var(--right_div_width);*/
+}
+
+.left
+{
+width: auto !important;
+margin-left: 2vw;
+margin-right: 4vw;
+    text-align:center;
+    float:left;
+    overflow:hidden;
+    height:100%;
+    margin-top:-1vw !important;
+    /*width: 700px;*/
+  }
+
+/* specific to the info table used in the right div of roomcast pages */
+
+table 
+{
+  width: auto !important;
+    margin-top: -6px;
+    /*width: 600px;*/
+    border-spacing: 20px 5px;
+    font-size: var(--info_table_label_size);
+}
+
+td input
+{
+    font-size: var(--info_table_cell_size);
+}
+
+td textarea
+{
+    font-size: var(--info_table_cell_size);
+}
+
+.label_col
+{
+    width: var(--info_table_left_col_width);
+}
+
+
+
+#savedeleterow td button
+{
+  /*font-size:80%;*/
+}
+
+.data_entry {
+ width: 35vw;
+ height: 15vw;
+ margin-bottom: -2vw;
+ font-size: 1.2vw !important;
+}
+
+/*ul 
+{
+    width: 200px;
+    list-style: none;
+    max-height:600px;
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+*/
+.list_ul
+{
+    width: auto !important;
+    list-style: none;
+    max-height:600px;
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+
+ul /* these uls are just used for alignment purposes */
+{
+    list-style: none;
+}
+
+/*#unitName {
+  color: var(--color3); float:left;
+}
+
+#brandName {
+  color: var(--color3); float:right;
+}
+*/
+
+div {
+  width: auto !important;
+}
+select
+{
+  background-color: var(--page_background);
+  color: var(--status_bar_text);
+}
+
+iframe { 
+border: none; 
+}
+
+.blankpage {
+  background: var(--color1);
+}
+
+#status_bar {
+  color: var(--status_bar_text);
+  position:relative;
+  padding:0;
+  /*margin:0;*/
+  overflow-x:auto;
+  overflow-y:hidden;
+  /*white-space: nowrap;*/
+
+
+}
+
+.pointer {
+  cursor: pointer !important;
+}
+
+/*button {font-size: 1.2em;}*/
+/*textarea {font-size: 0.8em;}*/
+/*input {font-size: 0.8em;}*/
+
+/*#titleSlot {
+    display: block;
+    margin-top: 0;
+    margin-bottom: 3px;
+    margin-left: 0;
+    margin-right: 0;
+    color: white; 
+    text-align: center;
+    font-size: 150%;
+    font-family: sans-serif;"
+}
+*/
+p {
+  margin-top: 0;
+  margin-bottom: -1.8vw;
+}
+
+  </style>
+
+<script type="text/javascript">
+
+  var D1,D2,D3,D4;
+  query_parameters = NUTELLA.parseURLParameters();
+  nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+
+  $(function () {
+
+    $('#audience').html('' + top.cluster_name + top.section_name);
+
+    // blank = top.build_URL({type:'roomcast',link:'blank.html',version:''}); 
+    // make local copies of appropriate portals, store in (global) my_portals
+    // console.log(top.portals);
+
+
+    nutella.net.request('get_host',{},function(message){
+      $('#hostname').val(message);
+    });
+
+
+
+})
+
+    function freeze(){
+      nutella.net.publish('freeze',{});
+    }
+
+    function thaw(){
+      nutella.net.publish('thaw',{});
+    }
+
+    function send_message(){
+      nutella.net.publish('learner_message',$('#message').val());
+    }
+
+    function launch_slides() {
+//      if (top.activity.slides == '') {alert('There are no slides for this activity.'); return;}
+      window.open(top.activity.slides,'slides');
+    }
+
+
+
+
+    function open_demo() {
+      var URL = 'http://' + top.QPbroker + ':57880/' + top.query_parameters.app_id + '/' + top.QPrun_id + '/runs/roomcast/index.html?broker=' + top.QPbroker + '&app_id=' + top.query_parameters.app_id + '&run_id=' + top.QPrun_id;
+      var sw = window.screen.width; 
+      // var sh = window.screen.availHeight;
+      var sh = window.screen.height;
+      var w = Math.floor(.97 * (sw/2));
+      var h = Math.floor(.97 * (sh/2));
+      D1 = window.open(URL,'','top=0,left=10,width=' + w  + ',height=' + h);
+      D2 = window.open(URL,'','top=' + (h+50) + ',left=10,width=' + w  + ',height=' + h);
+      D3 = window.open(URL,'','top=0,left=' + (w+50) + ',width=' + w  + ',height=' + h);
+      D4 = window.open(URL,'','top=' + (h+50) + ',left=' + (w+50) + ',width=' + w  + ',height=' + h);
+
+
+//      if (top.activity.slides == '') {alert('There are no slides for this activity.'); return;}
+     }
+
+
+    function close_demo() {
+      D1 = D1.close();
+      D2 = D2.close();
+      D3 = D3.close();
+      D4 = D4.close();
+     }
+
+     function clear_message(){
+      $('#message').val('');
+     }
+
+</script>
+</head>
+
+<body>
+  <span class="bet_time">roomCast 2.0</span>
+  <div class="left">
+    <span class="column_header">attention</span>
+<!--     <ul class="list_ul" >
+      <li>
+ -->    
+    <p class="pointer"><button id="freeze" class="action_button" onclick="freeze();" > freeze learners </button></p>
+    <p class="pointer"><button id="thaw" class="action_button" onclick="thaw();" > thaw learners </button></p><br>
+    <span class="column_header">windows</span>
+
+    <p class="pointer"><button id="slides" class="action_button" onclick="launch_slides();" > slides </button></p>
+    <p class="pointer"><button  class="action_button" onclick="open_demo();" > open demo </button></p>
+    <button class="action_button" onclick="close_demo();" > close demo </button>
+</li></ul>
+
+  </div>
+  <div class="right">
+    <span class="column_header">message to <span id="audience"></span> learners</span>
+    <br>
+    <textarea class='data_entry' id="message" rows=5></textarea>
+    <p class="pointer"><button class="action_button"  id="send_message" onclick="send_message();">send message</button>&nbsp;
+    <button class="action_button"  id="clear_message" onclick="clear_message();">clear message</button></p>
+  </div>
+
+</body>
+</html>
+
+
+
+

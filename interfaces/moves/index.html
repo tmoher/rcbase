@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.min.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+
+  <link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.9.2/themes/cupertino/jquery-ui.css" />
+ 
+  <style type="text/css">
+
+    body{
+      color:black;
+      background-color:white;
+      font-size: 3vh;
+      font-family: sans-serif;
+      cursor: pointer;
+
+    }
+
+    .inactiveLink {
+       pointer-events: none;
+       cursor: default;
+    }
+
+    td {
+      /*width:200px;*/
+    }
+
+
+    li {
+      font: 200 20px/1.5 Helvetica, Verdana, sans-serif;
+      border-bottom: 1px solid #ccc;
+      padding:5px 5px 5px 5px;
+      background-color:white;
+      list-style-type: none;
+    }
+    ul {
+       background-color:white;
+   }
+/*    li:last-child {
+      border: none;
+    }
+*/
+    li  a {
+      text-decoration: none;
+      color: white;
+
+      -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
+      -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
+      -o-transition: font-size 0.3s ease, background-color 0.3s ease;
+      -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
+      transition: font-size 0.3s ease, background-color 0.3s ease;
+      /*display: block;*/
+    }
+
+    #mydiv {
+      text-align: center;
+
+    }
+
+    button {
+      font-size: 20px;
+    }
+
+    li  a:hover {
+      font-size: 25px;
+      /*background: white;*/
+    }
+
+    #portals {
+      /*list-style: none;*/
+      padding-left: 0;
+    }
+ 
+    #portals .sort-handle {
+      display: none;
+    }
+ 
+    #portals .ui-selected .sort-handle
+     {
+      display: inline;
+      padding: 0 0.5em;
+      cursor: pointer;
+    }
+
+    #activities {
+      /*list-style: none;*/
+      padding-left: 0;
+    }
+ 
+    #activities .sort-handle {
+      display: none;
+    }
+ 
+    #activities .ui-selected .sort-handle
+     {
+      display: none;
+    }
+
+    #resources {
+      /*list-style: none;*/
+      padding-left: 0;
+    }
+
+    #resources li a
+    {
+      /*list-style: none;*/
+      padding-left: 0;
+    }
+
+    #resources li a.toggleList {
+      font-weight: bold;
+    }
+ 
+    #resources .sort-handle {
+      display: none;
+    }
+ 
+    #resources .ui-selected
+     {
+      font-weight: bold;
+/*      display: inline;
+      padding: 0 0.5em;
+      cursor: pointer;
+*/    }
+
+    .header {
+      font-size:25px; 
+      font-family:Helvetica;
+    }
+
+    li a.ui-selected {
+      background-color: white;
+      color: black;
+      font-weight: bold;
+      background-image: none;
+    }
+
+    li.ui-selected {
+      background-color: white;
+      color: black;
+      font-weight: bold;
+      background-image: none;
+    }
+    li.ui-selecting {
+      background-color: white;
+      color: red;
+      background-image: none;
+    }
+
+/*    #movelog_div {
+      padding: 10px;
+      background-color: gray;
+      border: 3px black;
+      position: absolute;
+      width: 50vw;
+      height: 50vh;
+      z-index: 10;
+      top: 50px;
+      left: 10%;
+    }
+*/
+    #movelog {
+      width: 80vw;
+      height: 80vh;
+    }
+
+    #move {
+      position: absolute;
+    }
+
+
+
+    #heatmap td {
+      padding: 3px 15px;
+      background-color: red;
+      height: 20px;
+      width: 20px;
+    }
+
+    #move_table td {
+      padding: 3px 15px;
+    }
+
+    #move_table tr {
+      background-color: silver;
+    }
+
+    optgroup { font-size:20px; }
+    select { font-size:20px; }
+    option { font-size:20px; }
+
+    #heatmap_div {
+      position: relative;
+      height: 400px;
+/*      width: 100%;
+      height: 100%;
+*/      /*background-color: black;*/
+/*      right:0;*/
+    }
+
+    #heatmap {
+      position: relative;
+      border: none;
+      padding: none;
+      z-index: 50;
+      width: 100%;
+      height: 100%;
+    }
+
+    #classroom {
+      position: absolute;
+      top:0;
+      left:0;
+      width: 100%;
+      height: 100%;
+/*      left: 4%;
+      top: 4%;
+*/      z-index: 10;
+    }
+
+    #outer {
+      border: 5px solid black;
+      position: absolute;
+      width: 800px;
+      height: 425px;
+      top: 80px;
+      left: 150px;
+      background-color: white;
+      padding: 10px;
+    }
+
+    input {
+      font-size: 3vh;
+    }
+
+    #start_date, #end_date {
+      width: 10vw;
+    }
+
+/*    tr {
+      width: 100%;
+    }
+*/ 
+  </style>
+
+  <script>
+    var query_parameters = NUTELLA.parseURLParameters();
+    var nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+    var THRESHOLD = 0;
+
+    var students = [];
+
+    var current_student_index;
+    var current_student_name = 'Class';
+
+    // var class_sum_of_message_lengths = 0;
+    var class_frequency = 0;
+
+    var grid_dimension = 10;
+    var grid = zero2D(grid_dimension,grid_dimension);
+
+    var LATEST_MOVE_TIMESTAMP = 0;
+    var EARLIEST_MOVE_TIMESTAMP = 9007199254740991;
+    var TOTAL_PERIOD_IN_SECONDS;
+
+
+
+    function build_move_frequency_table (students) {
+      var max = 0;
+      for (var i=0; i<students.length;i++) if (students[i].frequency > max) max = students[i].frequency;
+      $('#move_table').empty();
+      $('#move_table').append('<tr style="font-weight:bold;"><td>Name</td><td>Frequency</td></tr>');
+      for (var i=0; i<students.length; i++) { 
+        $('#move_table').append('<tr><td onclick="movelog(' + i + ');" width="10%">' + students[i].name + '</td><td onclick="movelog(' + i + ');"><img class=freq_bar id="bar' + i + '" src="bar.png"> ' + students[i].frequency + '</td></tr>');
+        $('#bar' + i).css('width',students[i].frequency/max * 60 + 'vw').css('height','2vh');
+      }
+      var f = Math.round(class_sum_of_message_lengths/class_frequency);
+      $('#move_table').append('<tr><td onclick="show_classlog();">Class</td><td>' + class_frequency + '</td></tr>');
+    }
+
+    function show_classlog() {
+      current_student_name = 'Class';
+      show_log(m);
+    }
+
+    function to_epoch_time(string){
+      // converts local date/time string to epoch time
+      // example: "July 1, 1978 02:30:00"   
+      var d = new Date(string + ' 00:00:01'); // Your timezone!
+      return (d.getTime());
+    }
+
+
+
+    function get_moves (start,end) { 
+      class_sum_of_message_lengths = 0;
+      class_frequency = 0;
+      nutella.net.request('get_moves',{start:start, end:end+24*60*60*1000},function(message){ 
+        var m = message;
+        m.sort(function(a,b){return (a.name.localeCompare(b.name));}); 
+        m.sort(function(a,b){return (a.name < b.name);}); 
+
+        // console.log(m)
+        students = [];
+        // var sum_of_message_lengths = 0;
+        var last_name = "Class";
+        for (var i=m.length-1; i>=0; i--){
+          var item = m[i]; 
+          if (item.timestamp < EARLIEST_MOVE_TIMESTAMP) EARLIEST_MOVE_TIMESTAMP = item.timestamp;
+          if (item.timestamp > LATEST_MOVE_TIMESTAMP) LATEST_MOVE_TIMESTAMP = item.timestamp;
+          if (last_name != item.name) {
+            last_name = item.name;
+            // sum_of_message_lengths = item.message.split(' ').length;
+            // class_sum_of_message_lengths += item.message.split(' ').length;
+            students.push({name:item.name, frequency: 1, log: [m[i]]});
+            class_frequency++
+          } else { 
+              students[students.length-1].log.push(m[i]);
+              if (!$('#filter').prop('checked') || Math.sqrt(  (item.x - item.old_x)**2 + (item.y - item.old_y)**2  ) > THRESHOLD) {  // students[students.length-1].log.push(m[i]);
+                students[students.length-1].frequency++;
+                // sum_of_message_lengths += item.message.split(' ').length;
+                // class_sum_of_message_lengths += item.message.split(' ').length;
+                class_frequency++;
+              }
+          }
+        } 
+        // students[students.length - 1].word_count_mean = Math.round(sum_of_message_lengths/students[students.length-1].frequency);
+          students.sort(function(a,b){return (a.name.localeCompare(b.name));}); 
+          students.sort(function(a,b){return (a.name < b.name);});
+        build_move_frequency_table(students);
+      })
+    }
+
+    function zero2D(rows, cols) {
+      var array = [], row = [];
+      while (cols--) row.push(0);
+      while (rows--) array.push(row.slice());
+      return array;
+    }
+
+
+    function show_log(log){ 
+      grid = zero2D(grid_dimension,grid_dimension); 
+      TOTAL_PERIOD_IN_SECONDS = (LATEST_MOVE_TIMESTAMP - EARLIEST_MOVE_TIMESTAMP)/1000;
+      var list = students[current_student_index].log; //console.log(list);
+      for (var i=0; i<list.length; i++){
+        item = list[i];
+        if (i==0) { //first item in the list
+          interval = item.timestamp - EARLIEST_MOVE_TIMESTAMP;
+        } else {
+          interval = item.timestamp - list[i-1].timestamp;
+        };
+        // interval = interval/1000; // count in seconds
+        // if (Math.floor(item.old_y * grid_dimension) == 10)alert(item.old_y + ' ' + grid_dimension);
+        // console.log(Math.floor(item.old_x * grid_dimension) + ' ' + Math.floor(item.old_y * grid_dimension) + ' ' + (interval/1000));
+        if (TOTAL_PERIOD_IN_SECONDS > 0) grid[Math.floor(item.old_x * grid_dimension)][Math.floor(item.old_y * grid_dimension)] += interval/1000/TOTAL_PERIOD_IN_SECONDS; 
+      }
+      interval = LATEST_MOVE_TIMESTAMP - list[list.length-1].timestamp;
+      if (TOTAL_PERIOD_IN_SECONDS > 0) grid[Math.floor(list[list.length-1].x * grid_dimension)][Math.floor(list[list.length-1].y * grid_dimension)] += interval/1000/TOTAL_PERIOD_IN_SECONDS;
+      
+      var adjustment = (grid[4][9] >= 1) ? 0 : (1 / (1-grid[4][9]));
+      grid[4][9] = 0;
+      console.log(grid);
+
+      $('#heatmap').empty(); 
+      // console.log(grid);
+
+      var s = '';
+      for (var i=0; i<grid_dimension; i++) { 
+        s += '<tr>';
+        for (var j=0; j<grid_dimension; j++) {
+          var op = 0;
+           s += '<td style="opacity:' + (0 + grid[j][i]*adjustment*2) + '"></td>';
+        }
+        s += '</tr>';
+      }
+      
+      $('#heatmap').append(s); 
+      $('#outer').show();
+    }
+
+
+
+    function movelog(index) {
+      current_student_index = index;
+      current_student_name = students[index].name;
+      show_log(students[index].log);
+    }
+
+    function toggle_filter() { 
+        get_moves(to_epoch_time($('#start_date').val()),to_epoch_time($('#end_date').val()) + 24*60*60*1000);
+    }
+
+    function init_heatmap_table () {
+    }
+
+    function today_string () {
+      var today = new Date();
+      var dd = String(today.getDate()).padStart(2, '0');
+      var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+      var yyyy = today.getFullYear();
+      return(mm + '/' + dd + '/' + yyyy);
+    }
+
+    $(function(){
+ 
+    // nutella.net.request('move_history',{},function(message,from){ 
+      // m = message;
+      // init_heatmap_table();
+      // classlog = message;
+      $( "#start_date, #end_date").val(today_string());
+      $( "#start_date, #end_date").datepicker();
+      get_moves(to_epoch_time($('#start_date').val()),to_epoch_time($('#end_date').val()) + 24*60*60*1000);
+
+      $( "#start_date, #end_date").change(function(){
+        get_moves(to_epoch_time($('#start_date').val()),to_epoch_time($('#end_date').val()) + 24*60*60*1000);
+      });
+
+      $('#filter').change(function(){build_move_frequency_table (students);})
+      
+      nutella.net.subscribe('updated_participant',function(item){
+        get_moves(to_epoch_time($('#start_date').val()),to_epoch_time($('#end_date').val()) + 24*60*60*1000);
+        // classlog.push(item);
+        // if (item.name == current_student_name) {
+        //   students[current_student_index].log.push(item);
+        //   if ($('#movelog_div').is(":visible")) show_log(students[current_student_index].log);
+        // } if ($('#movelog_div').is(":visible")) show_log(classlog);
+      })
+    // });
+  });
+
+</script>
+
+</head>
+<body>
+  <div id='selectors' align=center>
+<!--     <select id='activity' onchange="toggle_activity();">
+      <optgroup>
+        <option value='move'>move</option>
+        <option value='move'>move</option>
+      </optgroup>
+    </select>
+ -->  Move Frequency and Logs.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  From: <input type="text" id="start_date"> To: <input type="text" id="end_date">
+ &nbsp;&nbsp;&nbsp;<input type="checkbox" id="filter" CHECKED onchange="toggle_filter();"> Filter<br>
+  </div>
+  <br>
+    <table align=center id='move_table'>
+    </table>
+    <div id="outer" hidden align=center>
+      <div id='heatmap_div'>
+        <img id="classroom" src="background.png" >
+        <table  id="heatmap">
+        </table>
+      </div>        
+      <button onclick="$('#outer').hide();">close</button>
+    </div>
+  </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,54 @@
+
+<!-- <embed src="./webhelp.pdf" type="application/pdf" width="100%" />
+ -->
+
+<!doctype html>
+<html lang="en">
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="roomCast">
+  <title>portals</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="roomcast_style.css">
+
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+<link rel="preload" href="./webhelp.pdf" />
+
+<head>
+
+<script>
+
+
+
+ $(function () {
+
+var isChrome = !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
+var isFirefox = typeof InstallTrigger !== 'undefined';
+
+
+if (isChrome || isFirefox) window.location='./webhelp.pdf';
+
+// else setTimeout(function(){window.location='./webhelp.pdf';},5000);
+
+// else setTimeout(function(){$('#load').trigger('click');},1000);
+else setTimeout(function(){$('#load').trigger('click');},5000);
+
+// $('#load').trigger('click');
+
+ 	// window.location.href='./webhelp.pdf';
+
+ 	// window.location='./webhelp.pdf';
+
+ });
+
+
+
+</script>
+</head>
+<body>
+
+ <button  style="margin-left:50px; margin-top:50px;" id='load' class="action_button" onclick="window.location='./webhelp.pdf';"> Open Guide </button>
+</body>

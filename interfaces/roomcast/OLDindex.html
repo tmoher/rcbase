@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en">
+<!-- <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'; frame-ancestors *"> -->
+
+<!-- <meta http-equiv=“Pragma” content=”no-cache”>
+<meta http-equiv=“Expires” content=”-1″>
+<meta http-equiv=“CACHE-CONTROL” content=”NO-CACHE”>
+ -->
+<style>
+
+:root {
+
+  --color0: black;
+  --color1: #558C83;
+  --color2: #4F6457;
+  --color3: #A9D4BF;
+  --text1: white;
+}
+
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
+/*a:link {
+  color: white;
+}
+
+a:visited {
+  color: green;
+}
+
+a:hover {
+  color: hotpink;
+}
+
+a:active {
+  color: blue;
+}
+*/
+
+
+
+
+iframe {
+  background-color: none;
+  color: black;
+  border: none; 
+}
+
+
+body {
+    background-color: #374048;
+    font-family: "Arial";
+    overflow: hidden !important;
+    color: var(--text1);
+}
+
+.ui-select{width: 100%}
+/* This is to remove the arrow of select element in IE */
+select::-ms-expand {  display: none; }
+select{
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/*@-moz-document url-prefix(){
+  .ui-select{ position: relative; overflow: hidden;}
+  .ui-select select { width: 110%; background-position: right 30px center !important; border: none !important;}
+}
+*/
+#resource_bar {
+  /*position:relative;*/
+  top:0px;
+  background-color: #9ba5b0;  
+  background: #9ba5b0;
+  color:black;
+  font-size: 150%;
+  height:32px;
+  padding:0;
+  padding-top: 4px;
+  margin:0;
+  overflow-x:hidden;
+  overflow-y:hidden;
+  white-space: nowrap;
+}
+select {
+  border: none;
+  font-size: 135%;
+  color:white;
+  /*background-color: black;*/
+}
+
+
+
+/*    these next three are needed in
+      order to resize the select menu
+      width dynamically.
+*/
+
+.resizing_select {
+  background-color: transparent;
+  background: transparent;
+  width: 50px;
+} 
+ 
+#width_tmp_select{
+  display : none;
+} 
+
+
+#status_bar {
+  /* for some reason, these have to be in this file rather than in roomcast_style.css */
+
+  color: var(--status_bar_text);
+  text-align:center;
+  margin-bottom: 5px;
+  height:28px;
+/*  display: inline;
+*/  /*white-space: pre;*/
+
+}
+
+#alt_status_bar {
+  /* for some reason, these have to be in this file rather than in roomcast_style.css */
+  color: var(--status_bar_text);
+  text-align:center;
+  margin-bottom: 5px;
+  height:28px;
+  font-size: 150%;
+/*  display: inline;
+*/  /*white-space: pre;*/
+
+}
+
+
+#tabs .ui-tabs-active {
+  background: var(--color1);
+  border-style: none;
+}
+
+.ui-tabs .ui-tabs-tab
+{
+  padding:0 0 0 0;
+  background: var(--color3);       /* color of the little rim outide the tabs */
+  cursor: pointer;
+  height:30px;
+
+}
+
+.ui-tabs
+{
+  background: var(--color2); /* color of the little rim outide the iframe */
+  border: none;
+
+
+}
+
+.redText{ background-color:red; }
+
+li a {
+  position:relative;
+  top:-8px;
+}
+
+.ui-tabs .ui-tabs-nav
+{
+  font-size:130% !important;
+background: var(--color2); /* this is the background color of the tabs bar */
+border: none;
+
+}
+
+.ui-tabs .ui-tabs-panel 
+{
+
+background: var(--color1); /* this is the background color of all the iframes */
+
+}
+
+.ui-widget-header,.ui-state-default, ui-button {
+  background:'#b9cd6d';
+  border: 1px solid #b9cd6d;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+div.fadeMe {
+  opacity:    0.7; 
+  background: #000; 
+  width:      100%;
+  height:     100%; 
+  text-align: center;
+  z-index:    10;
+/*  top:        0; 
+  left:       0; 
+*/  position:   fixed; 
+  color: yellow;
+
+
+
+}
+
+.status {
+  background: transparent;
+  background-color: transparent;
+}
+
+#chop1 {
+
+  color: white;
+}
+#chop2 {
+
+  color: white;
+}
+/*    */
+
+
+</style>
+
+<head>
+
+<!--   <meta http-equiv="Content-Security-Policy" content="default-src *; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'; img-src * data: 'unsafe-inline'; connect-src * 'unsafe-inline'; frame-src *; frame-ancestors *">
+ -->
+
+  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: http:"> -->
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="roomCast">
+  <title>roomCast</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="roomcast_style.css">
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+  <script src="init.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+
+  
+  function validate(target){
+    target.value = target.value.replace(/[\\<>]/g,'');
+  }
+
+
+
+  function roomcast_portal(){
+    return (portal);
+  }
+
+  function roomcast_activity(){
+    return (activity);
+  }
+
+  function roomcast_name(){
+    return(nom);
+    // if (name_ID == -1) return ({ID:-1,printName:''});
+    // nom = names.find(function(item){ return (item.ID == name_ID && item.portalID == current_portal.ID)});
+    // return ({ID:nom.ID,printName:nom.printName});
+  }
+
+  function roomcast_iframe_size () {
+    return ({height: $(window).height() - 86, width: $(window).width()-16});
+  }
+
+  var bottomOfHeader = 85; //hard-wired hack; should be sum of status bar + resource bar + a bit for the bottom frame edge
+  var bottomOfVisibleWindow = $(window).height(); 
+  var h = bottomOfVisibleWindow - bottomOfHeader; 
+  $("iframe").attr("height",h);
+  $( window ).resize(function() { 
+    bottomOfVisibleWindow = $(window).height(); 
+    h = bottomOfVisibleWindow - bottomOfHeader;
+    $("iframe").attr("height",h);
+  });
+
+  var query_parameters = NUTELLA.parseURLParameters();
+  var nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+  var QPrun_id = query_parameters.run_id;
+  var QPapp_id = query_parameters.app_id;
+  if (QPapp_id == 'rq') QPapp_id = 'roomQuake'; //hack!
+  var QPbroker = query_parameters.broker;
+  var QPportal_id = query_parameters.portal_id;
+  var QPname_id = query_parameters.name_id;
+  var QPcontinue = query_parameters.hasOwnProperty('continue');
+  var QPopen = query_parameters.hasOwnProperty('open');
+  var QPstandalone = query_parameters.hasOwnProperty('standalone');
+
+  var lastping = (new Date).getTime();
+  setInterval(reconnect, 60*1000);
+
+
+  nutella.net.subscribe('ping',function(message,from){
+    lastping = (new Date).getTime();
+    var d = new Date(lastping);
+    // console.log('received ping at ' + d);
+  });
+
+  function reconnect(){
+    nutella.net.publish('pong',{});
+    var timeNow = (new Date).getTime();
+    if ((timeNow - lastping) > 70*1000){
+      var tN = new Date(timeNow);
+      var lp = new Date(lastping);
+
+      console.log('last ping received at ' + lp);
+      console.log('timed out at ' + tN);
+      error('connection lost');
+      $('#resource').append('<br><div align=center><button onclick="location.reload();">reconnect</button></div>');
+      $('#resource').show();
+      // location.reload(true);
+    }
+  }
+
+  nutella.net.subscribe('suicide', function(message){
+    error(message); 
+  })
+
+  nutella.net.subscribe('cluster_fuck',function(message){
+    if (message == cluster_name) error('cluster deleted');
+  })
+
+  nutella.net.subscribe('freeze',function(message){ 
+    if (portal.type == "learner") $('#freezer').show();
+  })
+
+  nutella.net.subscribe('thaw',function(message){
+    $('#freezer').hide();
+  })
+
+  nutella.net.subscribe('learner_message',function(m){
+    if (portal.type == "learner") show_message(m);
+  })
+
+
+
+  var application_name;
+  var cluster_name;
+  var section_name;
+  var activity;
+  var portal;
+  var nom;
+  var pw;
+  var all_section_names;
+
+  var distribution
+  var cluster;
+  var portals;
+  var cluster_resources;
+  var activities;
+  var cluster_description;
+  var includes;
+  var section;
+  var all_names;
+  var names;
+
+  var empty_resource = {ID: 0, printName:'unknown', type:'', link:'', version:'', description:''};
+  var resource = empty_resource;
+
+
+
+
+
+
+ $(function(){
+
+ 
+
+  if (QPrun_id == 'AD-MIN-0') {$('#chop1').hide(); $('#chop2').hide();}
+
+
+  if (query_parameters.hasOwnProperty('portal_id')) {$('#resource.bar').empty(); $('#resource').empty();}
+    else {
+      $('#open_application').html('<span>&nbsp;&nbsp;' + QPapp_id + '</span>') ;
+      $('#open_roomcast').html('<span>&nbsp;&nbsp;' + 'help' + '</span>') ;
+      $('#about_this_application').attr('height',h);
+      $('#about_roomcast').attr('height',h);
+      $('#about_this_application').attr('src',build_URL({type:'app',link:'about',version:''}).replace(/#/g,''));
+      $('#about_roomcast').attr('src',build_URL({type:'roomcast',link:'about.html',version:''}).replace(/#/g,''));
+  }
+
+
+// status_bar event handlers
+
+    $("#activity").on('change',function(){ 
+      adjust_status_menu_width('activity');
+      var new_activity = activities.find(function(item){return(item.ID == $("#activity option:selected").val())});
+      nutella.net.request('set_current_activity',{run:QPrun_id, activity:new_activity},function(){build_portal_menu();});
+    });
+
+    $("#section").on('change',function(){
+      if (portal.type == 'educator')
+        nutella.net.request('change_section',{cluster:cluster_name, section: $("#section option:selected").text()},function(message){;});
+      if (portal.type == 'designer') re_load({cluster:cluster_name, section: $("#section option:selected").text()});
+    });
+
+    $("#name").on('change',function(){ 
+      var new_href = location.href.replace(/&name_id.*/,'');
+      new_href += '&name_id=' + $("#name option:selected").val();
+      location.href = new_href;
+    });
+
+// password event handler
+
+    $("#password").on('keyup', function (e) {
+        if (e.keyCode == 13) {
+          $('.ui-button')[1].click();
+        }
+    });
+
+
+
+    var substrings = QPrun_id.split("-");
+    cluster_name = substrings[0] + '-' + substrings[1];
+    section_name = substrings[2];
+
+
+    $('#resource_bar').sortable();
+
+    // build status bar
+    application_name = QPapp_id; 
+    nutella.net.request('is_enactment_running',QPrun_id,function(response){
+      if (response != 'true') {error('this run is not active'); return;};
+      nutella.net.request('get_roomcast_resources',{},function(DB_roomcast_resources){
+        roomcast_resources = DB_roomcast_resources;
+        nutella.net.request('get_app_resources',{},function(DB_app_resources){
+          app_resources = DB_app_resources;
+          nutella.net.request('get_cluster',cluster_name,function(DB_cluster){ 
+            if (DB_cluster == 'fail')
+              {error('invalid cluster'); return;};
+            cluster = DB_cluster;
+            pw = cluster.pw;
+            portals = cluster.portals;
+            cluster_resources = cluster.cluster_resources;
+            activities = cluster.activities; 
+            distribution = cluster.distribution;
+            cluster_description = cluster.description;
+            includes = cluster.includes; 
+            nutella.net.request('get_section',QPrun_id,function(DB_section){
+              
+              if (DB_section == 'fail') {error('invalid section'); return;};
+              section = DB_section;
+              if(!(activity = activities.find(function(item) {return (item.ID == section.current_activity_ID)})))
+                {error('invalid activity'); return;}
+              section_description = section.description;
+              nutella.net.request('get_all_section_names',cluster_name,function(DB_all_section_names){
+                all_section_names = DB_all_section_names;
+                if (cluster.alt_title != '' && !QPstandalone) QPportal_id = 443; // hack for stand-alones
+                if (QPportal_id){
+                  if(!(portal = portals.find(function(item) {return (item.ID == QPportal_id)})))
+                    {error('invalid portal'); return;}
+                } else portal = {ID:0, printName: 'portal?',description:'',type:'unknown'};
+                all_names = section.names;
+                names = all_names.filter(function(item){return(item.portalID == portal.ID)});
+                if (query_parameters.hasOwnProperty('name_id')){
+                  if (QPname_id == 0){
+                    nom = {ID:0, printName: 'name?',portalID: portal.ID};
+                  } else {
+                    var n = names.filter(function(item) {return (item.ID == QPname_id)});
+                    if(n.length == 0) {error('invalid name'); return;}
+                    nom = n[0];
+                  }
+                } else nom = (names.length == 1)? names[0]: {ID:0, printName: 'name?',portalID: portal.ID};
+                
+                    
+                if (cluster.alt_title == '' || QPstandalone) {$('#status_bar').show();$('#alt_status_bar').hide();}
+                else {$('#status_bar').hide();$('#alt_status_bar').text(cluster.alt_title); $('#alt_status_bar').show();}
+                // $('#resource_bar,#resource').show();
+
+ // $('#application').change(function(){
+ //    $("#width_tmp_option").html($('#resizing_select option:selected').text());
+ //    $(this).width($("#width_tmp_select").width());  
+ // });
+
+ // $('#cluster').change(function(){
+ //    $("#width_tmp_option").html($('#resizing_select option:selected').text());
+ //    $(this).width($("#width_tmp_select").width());  
+ // });
+
+
+
+                build_application_menu();
+                build_cluster_menu();
+                build_section_menu();
+                build_activity_menu();
+                build_portal_menu();
+                build_name_menu();
+
+                // $('#application').on('change',(function(){ console.log('here');
+
+                //   var optionSelected = $("option:selected", this);
+                //   var valueSelected = this.text;
+                //   alert(valueSelected);
+
+
+
+                if (portal.printName == 'portal?') {error("Please select your portal from the menu above."); return;}
+                if (nom.printName == 'name?') {error("Please select your name from the menu above."); return;}
+                // $('#status_bar').show();
+
+                // if (portal.printName != "portal?" && nom.printName != "name?") build_resources_bar(); 
+                build_resources_bar(); 
+                $('#resource_bar,#resource').show();
+                nutella.net.request('change_section',{cluster:cluster_name, section: section_name},function(message){;});
+
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+
+  function error(message) {
+    // $('#status_bar').hide();
+    // $('#resource_bar').hide();
+    $('#resource').empty();
+    $('#resource').append('<div align=center style="font-size:1.4em;"><br><br><i>' + message + '</i></div>');
+    $('#resource').show();
+    return;
+  }
+
+// status bar functions
+
+  function build_application_menu(){
+    $('#application').empty();
+    $('#application').append('<option value="0" class=status>' + application_name + '</option>');
+    adjust_status_menu_width('application');
+  }
+
+  function build_cluster_menu(){
+    $('#cluster').empty();
+    $('#cluster').append('<option value="0" class=status>' + cluster_name + '</option>');
+    adjust_status_menu_width('cluster');
+  }
+
+  function build_section_menu(){
+    $('#section').empty();
+    for (var i=0; i<all_section_names.length; i++){
+      var s = (all_section_names[i] == section_name)? ' selected ' : '';
+      if (s == '' && portal.type != 'educator' && portal.type != 'designer') continue;
+      $('#section').append('<option' + s + ' value="0" class=status>' + all_section_names[i] + '</option>');
+    }
+    adjust_status_menu_width('section');
+    // $('#section').prop('disabled',portal.type != 'designer');
+  }
+
+  function build_activity_menu(){
+    $('#activity').empty();
+    for (var i=0; i<activities.length; i++){
+      var selected = (activity.ID == activities[i].ID)? 'selected ' : '';
+      $('#activity').append('<option ' + selected + 'value="' + activities[i].ID + '" class=status>' + activities[i].printName + '</option>');
+    }
+    adjust_status_menu_width('activity');
+    $('#activity').prop('disabled',portal.type != 'educator');
+  }
+
+
+function build_portal_menu(){
+    $('#portal').empty();
+    if(portal.printName == 'portal?') $('#portal').append('<option value="0" class=status> portal? </option>');
+    if (QPrun_id == 'AD-MIN-0')
+      document.title = QPbroker + ': ' + QPapp_id + ' ' +  portal.printName + ' ' + nom.printName;
+    else
+      document.title = QPbroker + ': ' + QPapp_id + ' ' +  cluster_name + '-' + section_name + ' ' + portal.printName + ' ' + nom.printName;
+    for (var i=0; i<portals.length; i++){
+      var item = portals[i];
+      // if ((portal.type != item.type) && !(portal.type == 'educator' || portal.type) continue;
+      // var d = distribution.filter(function(p){return(p.portal_ID == item.ID && p.activity_ID == activity.ID)});
+      // if (d.length == 0 && (item.type == 'learner' || item.type == 'public')) continue;
+      var selected = (portal.ID == item.ID)? ' selected ' : '';
+      if (QPopen || !QPcontinue || (item.type == portal.type))
+        $('#portal').append('<option ' + selected + 'value="' + item.ID + '" class=status>' + item.printName + '</option>');
+    }
+    adjust_status_menu_width('portal');
+
+    $("#portal").on('change',function(){
+      adjust_status_menu_width('portal');
+      $( "#password_dialog" ).dialog({
+          autoOpen: false, 
+          modal: true,
+          buttons: [  { text: "Ok", 
+                        click: function() {
+                          var response = $('#password').val();
+                          if (response == pw){
+                            if (new_portal.type == 'educator' || new_portal.type == 'designer' || 
+                                new_portal.type == 'system' || new_portal.type == 'application')
+                                  new_href += '&open';
+                            else  new_href += '&continue';
+                            $(this).dialog("close"); 
+                            location.href = (new_href + "&portal_id=" + new_portal_id).replace(/#/,'');
+                          }
+                          else { 
+                            $('#retry').text('Password incorrect.'); 
+                            $('#password').val('').focus();
+                            // $('#portal').val(portal.ID); 
+                            // adjust_status_menu_width('portal');
+                            // $(this).dialog("close");
+                          }
+                          // $(this).dialog("close");
+                        } 
+                      },
+                      { text: "Cancel", 
+                        click: function() { 
+                          $('#portal').val(portal.ID); 
+                          adjust_status_menu_width('portal');
+                          $(this).dialog("close");
+                        } 
+                      }
+                   ],
+         width: '460px'
+      });
+
+      var new_portal_id = $("#portal option:selected").val();
+      var new_portal = portals.find(function(item){return(item.ID == new_portal_id)});
+      if (QPcontinue || QPopen)
+        {location.href = location.href.replace(/&portal_id=.*/,"&portal_id=" + new_portal_id); return;}
+      var pw = new_portal.pw; 
+      if (new_portal.type == 'educator'  || new_portal.type == 'designer') pw = cluster.pw; 
+      var new_href = location.href.replace(/&portal_id=.*/,'');
+      if (pw != ''){
+        $('#password').val(''); $('#retry').val(' ');
+        $("#password_dialog" ).dialog( "open" );
+
+        // var response = prompt('Password','');
+        // if (response == pw){
+        //   if (new_portal.type == 'educator' || new_portal.type == 'designer' || new_portal.type == 'system' || new_portal.type == 'application')
+        //         new_href += '&open';
+        //   else  new_href += '&continue';
+        //   location.href = new_href + "&portal_id=" + new_portal_id;
+        // }
+        // else {alert('Password incorrect.'); $('#portal').val(portal.ID); adjust_status_menu_width('portal');}
+
+      } 
+      else location.href = new_href + "&continue&portal_id=" + new_portal_id;
+    });
+  }
+
+  function build_name_menu(){
+    $('#name').empty();
+    // $('#name').append('<optgroup style="font-size:18pt;">');
+    if (portal.printName == 'portal?') {$('#chop2').hide(); return;}
+    $('#chop2').show();
+    if (nom.printName == 'name?') $('#name').append('<option value="0" class=status> name? </option>');
+    for (var i=0; i<names.length; i++){
+      var item = names[i];
+      var selected = (nom.ID == item.ID)? 'selected ' : '';
+      $('#name').append('<option ' + selected + 'value="' + item.ID + '" class=status>' + item.printName + '</option>');
+    }
+    // $('#name').append('</optgroup>');
+
+    adjust_status_menu_width('name');
+
+  }
+
+// resource bar functions
+
+  function build_resources_bar(){ 
+ 
+    $('#resource_bar').empty();
+
+    var current_resources_IDs = distribution.filter(function(item){return (item.portal_ID == portal.ID && (item.activity_ID == activity.ID || (item.activity_ID == 0 && !is_activity_dependent(portal))));}).map(function(item2){return item2.resource_ID;});
+
+    switch (portal.type) {
+
+      case 'system': 
+        current_resources = roomcast_resources.filter(function(item){
+          return (item.link == 'resources.html'); // system manager restricted to resources resource
+        })
+        break;
+
+      case 'application':
+        current_resources = roomcast_resources.filter(function(item){
+          return ((!item.distribute || item.link == 'resources.html') && item.link !='about.html' && item.link !='dashboard.html'); // application manager always includes resources resource
+        })
+        break;
+      case 'designer':
+        current_resources = roomcast_resources.filter(function(item){
+          return (item.distribute);
+        })
+        break;
+      default: current_resources = roomcast_resources.concat(app_resources).concat(cluster_resources).filter(function(item){
+        return (current_resources_IDs.includes(item.ID))});
+        if (portal.type == 'educator' && cluster.alt_title == '') { 
+          var r = roomcast_resources.filter(function(item){return(item.link == 'dashboard.html');}); 
+          // teacher always gets dashboard unless standalone
+          current_resources.push(r[0]); 
+        }        
+     }
+    
+
+    for (var i=0; i<current_resources.length; i++){
+      var item = current_resources[i]; 
+      var text_color = (resource.ID == item.ID)? 'white': 'black'; 
+      $('#resource_bar').append('<a  style="color:' + text_color + ';" name="' + item.ID + 
+        '" onClick="select_resource(this);">&nbsp;&nbsp;' + item.printName + '&nbsp;&nbsp;</a>');
+    }
+
+    // remove unused resources
+
+    for (var i=$('#resource iframe').length; i>=1; i--){
+      var id = $('#resource iframe:nth-child(' + i + ')').prop('id').substring(1); 
+      var temp = current_resources.filter(function(item){return (item.ID == id)});
+      // alert('a ' + temp[0].link); alert('b ' + $('#resource iframe:nth-child(' + i + ')').prop('src'));
+
+      // if (temp.length == 0 || temp[0].link != $('#resource iframe:nth-child(' + i + ')').prop('src')) { $('#R' + id).remove(); }
+      if (temp.length == 0 || temp[0].link =='dashboard.html')// || build_URL(temp[0]) != $('#resource iframe:nth-child(' + i + ')').prop('src')) 
+        { 
+          $('#R' + id).remove(); 
+          if (id == resource.ID) resource = empty_resource; 
+        }
+              
+    }
+
+    for (var i=0; i<current_resources.length; i++){
+      var item = current_resources[i];
+      var id = 'R' + item.ID;
+      if ($('#' + id).length == 0)
+        $('#resource').append('<iframe allow="autoplay" hidden id="R' + item.ID + '" src="' + build_URL(item) + '" width=100% height=' + h + '></iframe>');
+    }
+
+    if (resource.ID != 0) { 
+      $('#resource iframe[id="R' + resource.ID + '"]').show();
+    }
+
+    if ($('#resource_bar a').length == 1 || (cluster.alt_title != '' && !QPstandalone)) {resource.ID = current_resources[0]; $('#resource_bar a:first-child').click();}
+
+  }
+
+
+    nutella.net.subscribe('names_update',function(message){ 
+      if (message.enactment == QPrun_id) {
+        all_names = message.names;
+        names = all_names.filter(function(item){
+          return (item.portalID == portal.ID);
+        });
+        build_name_menu();
+      }
+    });
+
+
+    nutella.net.subscribe('cluster_resources_update',function(message,from){
+      if (portal.type == 'system' || portal.type == 'application') return; 
+      if (message.cluster == cluster_name) {
+        cluster_resources = message.resources;
+        // cluster_resources = message.resources.filter(function(item){return(item.type == 'cluster')});
+        // // roomcast_resources = message.resources.filter(function(item){return(item.type == 'roomcast')});
+        // // app_resources = message.resources.filter(function(item){return(item.type == 'app')});
+        includes = message.includes;
+        build_resources_bar();
+      }
+    });
+
+
+    nutella.net.subscribe('roomcast_resources_update',function(message){ 
+        roomcast_resources = message;
+        build_resources_bar();
+    });
+
+    nutella.net.subscribe('app_resources_update',function(message){
+        app_resources = message;
+        build_resources_bar();
+    });
+
+    nutella.net.subscribe('portal_update',function(message){ 
+      if (message.cluster == cluster_name) {
+        portals = message.portals;
+        if (!portals.find(function(item){return (item.ID == portal.ID)})) location.reload(true);
+        build_portal_menu();
+      }
+    });
+
+    nutella.net.subscribe('activity_update',function(message){ 
+      if (message.cluster == cluster_name) {
+        activities = message.activities;
+        if (!activities.filter(function(item){return (item.ID == activity.ID)})) location.reload(true);
+        build_activity_menu();
+      }
+    });
+
+    nutella.net.subscribe('distribution_update',function(message){ 
+      if (message.cluster == cluster_name) {
+        distribution = message.distribution;
+        build_resources_bar();
+      }
+    });
+
+
+    nutella.net.subscribe('current_activity_changed',function(message){ 
+      activity = message;
+      build_activity_menu();
+      if (nom.printName != 'name?') build_resources_bar();section_description
+
+    });
+
+    // nutella.net.subscribe('teacher_changed_section',function(message){ 
+    //   if (cluster_name != message.cluster) return;
+    //   if (portal.type != 'public') return;
+    //   section_name = message.section; 
+    //   var old_run = section_name;
+    //   var new_href = location.href.replace
+    // });
+
+
+      // nutella.net.publish('teacher_changed_section',{cluster:cluster_name, section: section_name});
+
+    nutella.net.subscribe('teacher_changed_section',function(message){ 
+      if (message.cluster != cluster_name) return;
+      if (portal.type != 'educator' && portal.type != 'public' && portal.type != 'designer') return;
+      if (message.section == section_name) return;
+      re_load(message);
+    });
+      
+    function re_load(message){
+      var new_section = message.section;
+
+      var s = 'http://';
+      s += window.location.host + '/';
+      s += query_parameters.app_id + '/';
+      s += cluster_name + '-' + new_section + '/';
+      s += 'runs/roomcast/index.html?';
+      s += 'broker=' + QPbroker + '&';
+      s += 'app_id=' + query_parameters.app_id + '&';
+      s += 'run_id=' + cluster_name + '-' + new_section;
+      if (QPopen) s += '&open';
+      if (QPcontinue) s += '&continue';
+      if (QPportal_id) {
+        s += '&portal_id=' + QPportal_id;
+        if (nom.ID > 0) {
+          nutella.net.request('get_section',cluster_name + '-' + new_section,function(message){
+            var current_name = nom.printName
+            var id = message.names.filter(function(item){
+              return ((item.printName == nom.printName) && (item.portalID == nom.portalID));
+            });
+            if (id.length == 0) {window.location.href = s + '&name_id=0'; return}; // not good enough. 
+            s += '&name_id=' + id[0].ID;
+            // alert ('A ' + window.location.href)
+            window.location.href = s;
+          })
+        }
+      }
+      // alert ('B ' + window.location.href)
+      window.location.href = s;
+      // alert(s);
+    }
+
+
+    function show_message (m){
+      var html_m = m.replace(/\n/g,'<br>');
+      $('#message').html(html_m);
+      $( "#message_dialog" ).dialog({
+          autoOpen: false, 
+          modal: true,
+          buttons: [  { text: "Ok", 
+                        click: function() { 
+                            $(this).dialog("close"); 
+                        }
+                      }
+                   ],
+          width: "460px"
+       });
+         $("#message_dialog" ).dialog( "open" );
+ }
+     
+
+
+
+
+</script>
+</head>
+<body>
+
+  <div id="freezer" hidden class="fadeMe"><br><br><br><br><br><H1>The teacher would like your attention, please.</H1></div>
+  <div id="alt_status_bar" hidden>This is a test</div>
+  <div id="status_bar" hidden class="ui-select">
+    <select disabled class="resizing_select" id="application"></select>
+    <span id="chop1">&nbsp;•&nbsp;
+      <select disabled class="resizing_select" id="cluster"></select>&nbsp;•&nbsp;
+      <select class="resizing_select" id="section"></select>&nbsp;•&nbsp;
+      <select class="resizing_select" id="activity"></select>
+    </span> &nbsp;<span style="color:white;">•</span>&nbsp;        
+    <select class="resizing_select" id="portal"></select>
+    <span id="chop2">&nbsp;•&nbsp;
+      <select class="resizing_select" id="name"></select>
+    </span>
+        <!-- <select id="state"></select>&nbsp•&nbsp
+          <select id="level">roomCast</select> -->
+          <select id="width_tmp_select">
+            <option id="width_tmp_option"></option>
+          </select>
+        </div>
+        <div id="resource_bar" hidden  style="text-align:center;">
+  <a id="open_application"  style="color:white;" onClick="$(this).css('color','white'); $('#open_roomcast').css('color','black'); $('#about_this_application').show(); $('#about_roomcast').hide();"></a>
+  <a id="open_roomcast" onClick="$(this).css('color','white'); $('#open_application').css('color','black'); $('#about_this_application').hide(); $('#about_roomcast').show();"></a>
+</div>
+<div id="resource" hidden>
+  <iframe id="about_this_application" width=100%></iframe>
+  <iframe id="about_roomcast" hidden width=100%></iframe>
+</div>
+<div style="height:20px; width:100%; clear:both;"></div>
+<div id="password_dialog" hidden title="password">
+  Password: &nbsp; &nbsp; <input type=password id="password"><br><br>
+  <span id='retry'></span>
+</div>
+<div style="max-width:460px" id="message_dialog" hidden title="a message for you...">
+  <span id='message'></span>
+</div>
+
+
+
+<!-- <div id="tabs" >
+  <ul id="resources">
+  </ul>
+</div>
+ --></body>
+</html>

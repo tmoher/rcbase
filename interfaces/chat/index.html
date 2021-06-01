@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.min.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+
+  <link rel="stylesheet" type="text/css" href="http://code.jquery.com/ui/1.9.2/themes/cupertino/jquery-ui.css" />
+ 
+  <style type="text/css">
+
+    body{
+      color:black;
+      background-color:white;
+      font-size: 3vh;
+      font-family: sans-serif;
+      cursor: pointer;
+
+    }
+
+    .inactiveLink {
+       pointer-events: none;
+       cursor: default;
+    }
+
+    td {
+      /*width:200px;*/
+    }
+
+
+    li {
+      font: 200 20px/1.5 Helvetica, Verdana, sans-serif;
+      border-bottom: 1px solid #ccc;
+      padding:5px 5px 5px 5px;
+      background-color:white;
+      list-style-type: none;
+    }
+    ul {
+       background-color:white;
+   }
+/*    li:last-child {
+      border: none;
+    }
+*/
+    li  a {
+      text-decoration: none;
+      color: white;
+
+      -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
+      -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
+      -o-transition: font-size 0.3s ease, background-color 0.3s ease;
+      -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
+      transition: font-size 0.3s ease, background-color 0.3s ease;
+      /*display: block;*/
+    }
+
+    #mydiv {
+      text-align: center;
+
+    }
+
+    button {
+      font-size: 20px;
+    }
+
+    li  a:hover {
+      font-size: 25px;
+      /*background: white;*/
+    }
+
+    #portals {
+      /*list-style: none;*/
+      padding-left: 0;
+    }
+ 
+    #portals .sort-handle {
+      display: none;
+    }
+ 
+    #portals .ui-selected .sort-handle
+     {
+      display: inline;
+      padding: 0 0.5em;
+      cursor: pointer;
+    }
+
+    #activities {
+      /*list-style: none;*/
+      padding-left: 0;
+    }
+ 
+    #activities .sort-handle {
+      display: none;
+    }
+ 
+    #activities .ui-selected .sort-handle
+     {
+      display: none;
+    }
+
+    #resources {
+      /*list-style: none;*/
+      padding-left: 0;
+    }
+
+    #resources li a
+    {
+      /*list-style: none;*/
+      padding-left: 0;
+    }
+
+    #resources li a.toggleList {
+      font-weight: bold;
+    }
+ 
+    #resources .sort-handle {
+      display: none;
+    }
+ 
+    #resources .ui-selected
+     {
+      font-weight: bold;
+/*      display: inline;
+      padding: 0 0.5em;
+      cursor: pointer;
+*/    }
+
+    .header {
+      font-size:25px; 
+      font-family:Helvetica;
+    }
+
+    li a.ui-selected {
+      background-color: white;
+      color: black;
+      font-weight: bold;
+      background-image: none;
+    }
+
+    li.ui-selected {
+      background-color: white;
+      color: black;
+      font-weight: bold;
+      background-image: none;
+    }
+    li.ui-selecting {
+      background-color: white;
+      color: red;
+      background-image: none;
+    }
+
+    #chatlog_div {
+      padding: 10px;
+      background-color: gray;
+      border: 3px black;
+      position: absolute;
+      width: 80vw;
+      height: 80vh;
+      z-index: 10;
+      top: 50px;
+      left: 10%;
+    }
+
+    #chatlog {
+      width: 78vw;
+      height: 70vh;
+      font-family: monospace;
+    }
+
+    #chat {
+      position: absolute;
+    }
+
+    td {
+      padding: 3px 15px;
+    }
+
+    tr {
+      background-color: silver;
+    }
+
+    optgroup { font-size:20px; }
+    select { font-size:20px; }
+    option { font-size:20px; }
+
+    #filters {
+      font-size: 3vh;
+    }
+
+    input {
+      font-size: 3vh;
+
+    }
+
+    #start_date, #end_date {
+      width: 10vw;
+    }
+
+/*    tr {
+      width: 100%;
+    }
+*/ 
+  </style>
+
+  <script>
+    var query_parameters = NUTELLA.parseURLParameters();
+    var nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+//***********************************************
+
+    var LOG;
+    var students;
+
+    function to_epoch_time(string){
+      // converts local date/time string to epoch time
+      // example: "July 1, 1978 02:30:00"   
+      var d = new Date(string + ' 00:00:01'); // Your timezone!
+      return (d.getTime());
+    }
+
+
+    function fetch_and_render_bar_graph (start,end) { 
+      nutella.net.request('get_chats',{start:start, end:end+24*60*60*1000},function(message){ 
+        LOG = message;
+        build_students();
+        render_bar_graph();
+      })
+    }
+
+    function build_students () {
+        students = [];
+        for (var i=0; i<LOG.length; i++){
+
+          var d = new Date(0);
+          d.setUTCSeconds(LOG[i].timestamp/1000);
+          var h = d.getHours();
+          if ((h < 8 || h >= 16) && !$('#outsideHours').prop('checked')) continue;
+          if (h >= 8 && h < 16 && !$('#schoolHours').prop('checked')) continue;
+
+
+
+
+          // if LOG[i].timestamp is out of range re: time of day, continue
+
+
+          // var index = students.findIndex(function(item){return (item.chatter == LOG[i].chatter);});
+          var index = -1;
+          for (var j=0; j<students.length; j++) if (students[j].name == LOG[i].chatter) index = j;
+          if (index < 0){  //new name
+            students.push({name: LOG[i].chatter, log: [{timestamp: LOG[i].timestamp, message: LOG[i].message, chatters: LOG[i].chatters}]});
+          } else {
+            students[index].log.push({timestamp: LOG[i].timestamp, message: LOG[i].message, chatters: LOG[i].chatters});
+          }
+        }; 
+    }
+
+    function render_bar_graph() { 
+      // renders the student array
+      var class_count = 0;
+      var class_words = 0;
+      var class_average_words_per_chat = 0;
+      var max = 0;
+      for (var i=0; i<students.length;i++) if (students[i].log.length > max) max = students[i].log.length;
+      $('#chat_table').empty();
+      $('#chat_table').append('<tr style="font-weight:bold;"><td>Name</td><td style="text-align:center;">WPC</td><td>Frequency</td></tr>');
+      for (var i=0; i<students.length; i++) { 
+        var words = 0;
+        for (var j=0; j<students[i].log.length; j++) words += students[i].log[j].message.split(' ').length;
+        class_words += words;
+        var count = students[i].log.length;
+        class_count += count;
+        var average_words_per_chat = 0;
+        if (count > 0) average_words_per_chat = Math.round(words/count);
+
+        $('#chat_table').append('<tr><td onclick="student_log(' + i + ');" width="10%">' + students[i].name + '</td><td style="text-align:center;">' + average_words_per_chat + '</td><td onclick="student_log(' + i + ');"><img class=freq_bar id="bar' + i + '" src="bar.png"> ' + count + '</td></tr>');
+        $('#bar' + i).css('width',count/max * 60 + 'vw').css('height','2vh').css('background-color:black;');
+      }
+      if (students.length > 0) class_average_words_per_chat = Math.round(class_words/class_count);
+      $('#chat_table').append('<tr><td onclick="class_log();">Class</td><td style="text-align:center;">' + class_average_words_per_chat + '</td><td>' + class_count + '</td></tr>');
+    }
+
+    var current_student_name = '';
+
+    function student_log(index) { 
+      current_student_name = students[index].name;
+      // log.sort(function(a,b){ return (a.timestamp < b.timestamp)});
+      $('#chatlog').val();
+      var header = ''; //students[index].name + "\'s Chat Log " + $('#start_date').val() + " through " + $('#end_date').val() + "\n\n";
+      var string = '';
+      var student = students[index]; 
+      for (var i=0; i<student.log.length; i++){ 
+
+          var d = new Date(0);
+          d.setUTCSeconds(student.log[i].timestamp/1000);
+          var h = d.getHours(); var m = d.getMinutes();
+
+          var DD = ("0" + d.getDate()).slice(-2);
+
+          // getMonth returns month from 0
+          var MM = ("0" + (d.getMonth() + 1)).slice(-2);
+
+          var YYYY = d.getFullYear();
+
+          var hh = ("0" + d.getHours()).slice(-2);
+
+          var mm = ("0" + d.getMinutes()).slice(-2);
+
+          var ss = ("0" + d.getSeconds()).slice(-2);
+
+          var date_string = YYYY + "-" + MM + "-" + DD + " " + hh + ":" + mm + ":" + ss;
+
+// will output something like "2019-02-14 11:04:42"
+
+
+
+          // if ((h < 8 || h >= 16) && !$('#outsideHours').prop('checked')) continue;
+          // if (h >= 8 && h < 16 && !$('#schoolHours').prop('checked')) continue;
+
+        var temp = student.log[i].message.replace(/\n/g, ' ');
+        // var item = h + ':' + m + ' ' + student.name + ': ' + temp;
+        var item = date_string + ' ' + student.name + ': ' + temp;
+        item += ' (';
+        for (var j=0; j<student.log[i].chatters.length; j++){
+          item += student.log[i].chatters[j];
+          item += ' ';
+          // if (j != student.log[i].chatters.length - 1) string += ', ';
+        }
+        item += ')\n';
+        string = item + string;
+      }
+      $('#chatlog').val(header + string);
+      $('#chatlog_div').show();
+    }
+
+
+      // if (current_student_name == 'Class') string = "Class\'s Chat Log since inception. \n\n";
+
+
+    function class_log(){
+
+      current_student_name = 'Class';
+      // log.sort(function(a,b){ return (a.timestamp < b.timestamp)});
+      $('#chatlog').val();
+      var header = ''; //"Class log " + $('#start_date').val() + " through " + $('#end_date').val() + "\n\n";
+      var string = '';
+
+      for (var i=0; i<LOG.length; i++){ 
+
+          var d = new Date(0);
+          d.setUTCSeconds(LOG[i].timestamp/1000);
+          var h = d.getHours(); var m = d.getMinutes();
+
+          var DD = ("0" + d.getDate()).slice(-2);
+
+          // getMonth returns month from 0
+          var MM = ("0" + (d.getMonth() + 1)).slice(-2);
+
+          var YYYY = d.getFullYear();
+
+          var hh = ("0" + d.getHours()).slice(-2);
+
+          var mm = ("0" + d.getMinutes()).slice(-2);
+
+          var ss = ("0" + d.getSeconds()).slice(-2);
+
+          var date_string = YYYY + "-" + MM + "-" + DD + " " + hh + ":" + mm + ":" + ss;
+
+
+
+        var temp = LOG[i].message.replace(/\n/g, ' ');
+        var item = date_string + ' ' + LOG[i].chatter + ': ' + temp;
+        item += ' (';
+        for (var j=0; j<LOG[i].chatters.length; j++){
+          item += LOG[i].chatters[j];
+          item += ' ';
+          // if (j != student.log[i].chatters.length - 1) string += ', ';
+        }
+        item += ')\n';
+        string = item + string;
+      }
+      $('#chatlog').val(header + string);
+      $('#chatlog_div').show();
+    }
+      function filter_change() {
+        $('#chatlog_div').hide();
+        build_students();
+        render_bar_graph();
+      }
+
+    $(function(){
+
+      var today = new Date();
+      var dd = String(today.getDate()).padStart(2, '0');
+      var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+      var yyyy = today.getFullYear();
+      today = mm + '/' + dd + '/' + yyyy;
+      $( "#start_date, #end_date").val(today);
+      $( "#start_date, #end_date").datepicker();
+      fetch_and_render_bar_graph(to_epoch_time($('#start_date').val()),to_epoch_time($('#end_date').val()) + 24*60*60*1000);
+      $( "#start_date, #end_date").change(function(){
+        fetch_and_render_bar_graph(to_epoch_time($('#start_date').val()),to_epoch_time($('#end_date').val()) + 24*60*60*1000);
+      });
+
+      nutella.net.subscribe('chat',function(item){ 
+        if (Date.now() > (to_epoch_time($('#end_date').val()) + 24*60*60*1000)) return;
+        if ($('#chatlog_div').is(":visible") && (current_student_name == item.chatter || current_student_name == 'Class')){
+          var string = item.chatter + ': ' + item.message.replace(/\n/g, ' ') + ' (';
+          for (var j=0; j<item.chatters.length; j++){
+            string += item.chatters[j].name;
+            string += ' ';
+            // if (j != student.log[i].chatters.length - 1) string += ', ';
+          }
+          string += ')\n';
+          $('#chatlog').val(string + $('#chatlog').val());
+        }
+        var c = [];
+        var t = Date.now();
+        var chatters = item.chatters;
+        for (var i=0; i<chatters.length; i++) {
+          c[i] = chatters[i].name;
+        }
+
+        // this is slow. there's another way, not very hard
+
+        // var index = students.findIndex(function(arg){return (arg.name == item.chatter);});
+        var index = -1;
+        for (var j=0; j<students.length; j++) if (students[j].name == item.chatter) index = j;
+
+        if (index < 0){  //new name
+            students.push({name: item.chatter, log: [{timestamp: Date.now(), message: item.message, chatters: c}]});
+          } else {
+            students[index].log.push({timestamp: Date.now(), message: item.message, chatters: c});
+          };
+          LOG.push({timestamp: Date.now(), chatter: item.chatter, message: item.message, chatters: c});
+        // LOG.push({timestamp: t, chatter: item.chatter, message: item.message, chatters:c});
+        // build_students();
+        render_bar_graph();
+      });
+    });
+
+//***********************************************
+
+
+
+</script>
+
+</head>
+<body>
+
+  <div id='filters' align=center>
+    Chat Frequency and Logs.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  
+    From: <input type="text" id="start_date"> To: <input type="text" id="end_date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <input onchange="filter_change();" type=checkbox id='schoolHours' CHECKED> school hours <input onchange="filter_change();" type=checkbox id='outsideHours' CHECKED> outside school <br><br>
+  </div>
+ 
+  <div align=center>
+    <table id='chat_table'>
+    </table>
+  </div>
+
+  <div id='chatlog_div' align=center hidden>
+      <textarea id='chatlog'>
+      </textarea>
+      <button onclick="$('#chatlog_div').hide();">close</button>
+  </div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

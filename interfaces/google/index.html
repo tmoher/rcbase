@@ -1,0 +1,101 @@
+<!-- <html lang="en">
+  <head>
+    <meta name="google-signin-scope" content="profile email">
+    <meta name="google-signin-client_id" content="YOUR_CLIENT_ID.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+  </head>
+  <body>
+    <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+    <script>
+      function onSignIn(googleUser) {
+        // Useful data for your client-side scripts:
+        var profile = googleUser.getBasicProfile();
+        console.log("ID: " + profile.getId()); // Don't send this directly to your server!
+        console.log('Full Name: ' + profile.getName());
+        console.log('Given Name: ' + profile.getGivenName());
+        console.log('Family Name: ' + profile.getFamilyName());
+        console.log("Image URL: " + profile.getImageUrl());
+        console.log("Email: " + profile.getEmail());
+
+        // The ID token you need to pass to your backend:
+        var id_token = googleUser.getAuthResponse().id_token;
+        console.log("ID Token: " + id_token);
+      }
+    </script>
+  </body> -->
+
+  <!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- Your interface name here-->
+  <!-- <title>population trends</title> -->
+  <!-- The description of this interfaces here -->
+  <meta name="description" content="">
+<!--  <script src="webfont.js"></script>
+ -->    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script> -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script type="text/javascript" src="https://apis.google.com/js/client.js"></script>
+<style>
+  div {
+      overflow: hidden; /* Hide horizontal scrollbar */
+
+    resize: none;
+    overflow:;
+    height: 70vh;
+    width: 60%;
+  }
+  iframe {
+    overflow-x: hidden;
+    resize: none;
+    height: 400px;
+    width: 400px;
+  }
+
+</style>
+
+
+<!-- <style>
+  div {
+    width: 700px;
+    height: 700px;
+  }
+  iframe {
+    width: 700px;
+    height: 700px;
+
+  }
+</style>
+ -->
+</head>
+<body>
+
+<script>
+
+//  $.get("https://script.google.com/macros/s/AKfycbzOA1H0XyVZ6XkXzAp_-kWi3q6Gqhv1tzjAv_m6U98X-sdB7Mw/exec", function(data){
+    // console.log('returned');
+  // });
+// document.getElementById("myForm").submit();
+</script>
+
+<iframe src="https://docs.google.com/document/d/1Ht3E-riAFKHhToAgyFe0TEkk25v5xFi7GJAc2gQ73d8/edit?usp=sharing&rm=embedded"></iframe> 
+
+<!-- <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vQSim29oSlzAZw8bBiiRVo-Ju2WcalNUOB6_yQ86k72ahIu1Z8SvGZt89ZQlAsGgUcI7UHTnFauEpEK/embed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+ -->
+ <!--    <iframe src="https://docs.google.com/drawings/d/1j6g62xJl9bqYvOheuhEFcCDU6Ppc21I51_W3spcTqdE/view?usp=sharing" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+ -->
+<!--     <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vR11u0QhIQOMa1AAT5GMhx6cjCnRUCDoKWf36hJJyEO3MVrahykXxbM7JeKkLEhzbibhuXkmiggJdaR/embed?start=false&loop=false&delayms=3000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+ -->
+    <!-- <iframe src="https://docs.google.com/document/d/1Bioeh4yRGXOuekVEEgxGC3AjlWbsefPO-7qaqueCaTc/edit?usp=sharing&rm=minimal"></iframe> -->
+
+<!--  
+
+the trick was to clear some deeper caches (not sure which) and perhaps to be logged in? to get it to run on Chrome.
+
+ -->
+</body>
+</html>
+

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="roomCast">
+  <title>distribution</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="roomcast_style.css">
+
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+
+  <style>
+
+span {
+  cursor: pointer;
+  background-color: transparent;
+}
+
+
+.upper_right {
+  color: darkgray;
+    position:absolute !important;
+    width: 0;
+    height: 0;
+    top:10px;
+    right:200px;
+    font-size: 150%;
+    font-style:italic;
+    margin-right: 30px;
+    z-index: 900;
+}
+
+
+#shebang>div { float: left !important; display: inline-block;}
+
+  </style>
+
+  <script type="text/javascript">
+
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+
+//  BIG NEED: Add color coding to the portal and activity selector
+//  if you select a portal, the colors of the activity buttons should
+//  be set to pink (or something) if there are no resources assigned
+//  to that activity for the selected portal. And vice versa if you
+//  select an activity. partner portals are exempted from this.
+
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+
+
+    query_parameters = NUTELLA.parseURLParameters();
+    nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+    var my_portals = [];
+    var my_activities =[];
+    var my_resources = [];
+    var my_distribution = [];
+    var includes = [];
+    var activity = {ID:-1};
+    var portal = {ID:-1};
+    var blank; 
+    var current_activity_name = ''
+    var current_portal_name = '';
+
+
+  $(function () {
+
+
+    $("#wrapper").draggable({
+      cancel : '.no-drag'
+    });
+
+
+    $( document ).tooltip({
+      disabled: false
+    });
+
+    $("#shebang").sortable({ revert:true});
+
+    my_portals = JSON.parse(JSON.stringify(top.portals));
+    my_activities = JSON.parse(JSON.stringify(top.activities));
+    my_resources = JSON.parse(JSON.stringify(top.roomcast_resources.
+      concat(top.app_resources).concat(top.cluster_resources)));
+    includes = top.includes;
+    my_resources = my_resources.filter(function(item){
+      return (includes.includes(item.ID))
+    });
+    my_distribution = JSON.parse(JSON.stringify(top.distribution));
+    build_portals_list();
+    build_activities_list();
+    build_resources_list();
+  })
+
+  function build_portals_list(){
+    $('#portals_list').empty();
+    for (var i=0; i<my_portals.length; i++) { 
+      var item = my_portals[i];
+      var text = item.printName;
+      if (item.type == 'system' || item.type == 'application' || item.type == 'designer') 
+        $('#portals_list').append('<li hidden><button class="notcurrent" name="' + item.ID + '">' + text + '</button></li>');
+      else   
+        $('#portals_list').append('<li><button class="notcurrent" name="' + item.ID + '">' + text + '</button></li>');
+    }
+    $('#resources_list li button').off('click');
+    $('#portals_list li button').click(function(event){ 
+      current_portal_name = event.target.innerHTML;
+      $('#resource_header').prop('title', 'Select one or more resources to distribute to ' + current_portal_name + ' during ' + current_activity_name + '. Selected resources are highlighted in black.');
+
+      $('#resources_list li button').attr('class', 'notcurrent');
+      $('#portals_list li button').attr('class', 'notcurrent');
+      $(this).attr('class','current');
+        var selected_portal_ID = $(this).attr('name'); 
+        portal = my_portals.find(function(item){
+          return (selected_portal_ID == item.ID)
+        });
+        if (!top.is_activity_dependent(portal)) {
+          $('#activities_list').hide();
+          $('#resource_header').prop('title', 'Select one or more resources to distribute to ' + current_portal_name + ' during all activities. Selected resources are highlighted in black.');
+        }
+        else {
+          $('#activities_list').show(); 
+          if (current_activity_name == '') $('#resource_header').prop('title', 'Please select an activity in order to configure resources.');
+        }
+        if (activity.ID != -1 || !top.is_activity_dependent(portal)) update_resources();
+      })
+
+  }
+
+  function build_activities_list(){
+    $('#activities_list').empty();
+    for (var i=0; i<my_activities.length; i++) { 
+      var item = my_activities[i];
+      var text = item.printName;
+      $('#activities_list').append('<li><button class="notcurrent" name="' + item.ID + '">' + text + '</button></li>');
+    }
+    $('#activities_list li button').off('click');
+    $('#activities_list li button').click(function(event){ 
+      current_activity_name = event.target.innerHTML;
+      $('#resource_header').prop('title', 'Select one or more resources to distribute to ' + current_portal_name + ' during ' + current_activity_name + '. Selected resources are highlighted in black.');
+      if (current_portal_name == '') $('#resource_header').prop('title', 'Please select a portal in order to configure resources.');
+
+
+      $('#activities_list li button').attr('class', 'notcurrent');
+      $(this).attr('class','current');
+        var selected_activity_ID = $(this).attr('name');
+        activity = my_activities.find(function(item){
+          return (selected_activity_ID == item.ID)
+        });
+        if (portal.ID != -1) update_resources();
+      })
+  }
+
+  function build_resources_list(){ 
+    $('#resources_list').empty();
+    for (var i=0; i<my_resources.length; i++) { 
+      var item = my_resources[i];
+      var text = item.printName;
+      if (item.version != '') text += ' [' + item.version + ']';
+      $('#resources_list').append('<li><button class="notcurrent" name="' + item.ID + '">' + text + '</button></li>');
+    }
+    // $('#resources_list li button').off('click');
+    $('#resources_list li button').click(function(){ 
+      if (portal.ID == -1 || (activity.ID == -1 && top.is_activity_dependent(portal))) return; 
+      var resource_ID = Number(($(this).attr('name'))); 
+      if ($(this).attr('class') == 'current') {
+        $(this).attr('class', 'notcurrent');
+        my_distribution = my_distribution.filter(function(item){ 
+          return ((item.portal_ID != portal.ID) ||
+            (item.activity_ID != activity.ID && top.is_activity_dependent(portal)) ||
+            (item.resource_ID != resource_ID)
+            );
+        });
+      } else {
+        $(this).attr('class', 'current');
+        var temp_activity = activity.ID;
+        if (!top.is_activity_dependent(portal)) temp_activity = 0;
+        my_distribution.push({portal_ID: Number(portal.ID), activity_ID: Number(temp_activity), resource_ID: Number(resource_ID)});
+      }
+      update_DB_distribution();
+    })
+  }
+
+  function update_resources(){ 
+    $('#resources_list li button').attr('class', 'notcurrent'); 
+    for (var i=0; i<my_resources.length; i++){
+      if (my_distribution.filter(function(item){ 
+        return ((item.portal_ID == portal.ID) && 
+          (item.activity_ID == activity.ID || !top.is_activity_dependent(portal)) && 
+          (item.resource_ID == my_resources[i].ID) )
+      }).length != 0) {
+        $('#resources_list li button[name=' + my_resources[i].ID + ']').attr('class', 'current'); 
+      }
+    }
+  }
+
+
+  function update_DB_distribution(){
+    // nutella.net.publish('distribution_update',{cluster:top.cluster,distribution:my_distribution});
+    var cluster_distribution = my_distribution;
+    nutella.net.request('set_cluster_distribution', {cluster: top.cluster_name, cluster_distribution:cluster_distribution}, function(message){
+      if (message == 'fail') top.error ('attempt to update cluster distribution failed');
+    }); 
+    // nutella.net.publish('set_cluster_distribution', {cluster: top.cluster, cluster_distribution:cluster_distribution});
+  }
+
+  nutella.net.subscribe('cluster_resources_update',function(message){ 
+    if (message.cluster != top.cluster_name) return;
+    // if (top.current_portal.type == 'system' || top.current_portal.type == 'application') return;
+    my_resources = top.roomcast_resources.concat(top.app_resources).concat(JSON.parse(JSON.stringify(message.resources)));
+    includes = JSON.parse(JSON.stringify(message.includes));
+    my_resources = my_resources.filter(function(item){
+      return (includes.includes(item.ID))
+    });
+    var m = [];
+    var dirty = false;
+    for (var i=0; i<my_distribution.length; i++){
+      var item = my_distribution[i];
+      // if (my_resources.find(function(resource){return(resource.portal_ID != top.portal.ID || resource.ID == item.resource_ID);}))  m.push(item);
+      if (my_resources.find(function(resource){return(resource.ID == item.resource_ID);}))  m.push(item);
+      else dirty = true;
+    }
+
+    my_distribution = m;
+    if (dirty) update_DB_distribution();
+
+    build_resources_list();
+    update_resources();
+    // update my_resources
+  })
+
+  nutella.net.subscribe('app_resources_update',function(message){
+    if (message.cluster != top.cluster_name) return;
+    my_resources = top.roomcast_resources.concat(JSON.parse(JSON.stringify(message.resources))).concat(top.cluster_resources);
+    includes = JSON.parse(JSON.stringify(message.includes));
+    my_resources = my_resources.filter(function(item){
+      return (includes.includes(item.ID))
+    });
+    var m = [];
+    var dirty = false;
+    for (var i=0; i<my_distribution.length; i++){
+      var item = my_distribution[i];
+      if (my_resources.find(function(resource){return(resource.portal_ID != top.portal.ID || resource.ID == item.resource_ID);}))  m.push(item);
+      else dirty = true;
+    }
+
+    my_distribution = m;
+    if (dirty) update_DB_distribution();
+
+    build_resources_list();
+    update_resources();
+    // update my_resources
+  })
+
+  nutella.net.subscribe('roomcast_resources_update',function(message){
+    if (message.cluster != top.cluster_name) return;
+    my_resources = JSON.parse(JSON.stringify(message.resources)).concat(top.app_resources).concat(top.cluster_resources);
+    includes = JSON.parse(JSON.stringify(message.includes));
+    my_resources = my_resources.filter(function(item){
+      return (includes.includes(item.ID))
+    });
+    var m = [];
+    var dirty = false;
+    for (var i=0; i<my_distribution.length; i++){
+      var item = my_distribution[i];
+      if (my_resources.find(function(resource){return(resource.portal_ID != top.portal.ID || resource.ID == item.resource_ID);}))  m.push(item);
+      else dirty = true;
+    }
+
+    my_distribution = m;
+    if (dirty) update_DB_distribution();
+
+    build_resources_list();
+    update_resources();
+    // update my_resources
+  })
+
+  nutella.net.subscribe('portal_update',function(message){
+    if (message.cluster != top.cluster_name) return;
+
+    // can't figure out why the following doesn't work
+
+    // my_portals = JSON.parse(JSON.stringify(message.portals));
+    // build_portals_list();
+    // if ($('#portals_list li button[name=' + portal.ID + ']')) {
+    //   $('#portals_list li button[name=' + portal.ID + ']').click();
+    // } else {
+    //   portal.ID = -1;
+    //   $('#resource_list li button').attr('class', 'notcurrent');
+    // }
+    // update_resources();
+
+    // so here is a workaround
+
+    location.reload(true);
+    
+  })
+
+  nutella.net.subscribe('activity_update',function(message){
+    if (message.cluster != top.cluster_name) return;
+    my_activities = JSON.parse(JSON.stringify(message.activities));
+    build_activities_list();
+    if ($('#activities_list li button[name=' + activity.ID + ']')) {
+      $('#activities_list li button[name=' + activity.ID + ']').click();
+      if (!top.is_activity_dependent(portal)) $('#activities_list').hide();
+    } else {
+      activity.ID = -1;
+      $('#resource_list li button').attr('class', 'notcurrent');
+    }
+    update_resources();
+    
+  });
+
+ function toggle_tooltips(){
+  if($( document ).tooltip( "option", "disabled" )) {
+    $(document).tooltip("enable");
+    $('#tooltip_button').text ('hide help');
+  }
+  else {
+    $(document).tooltip("disable");
+    $('#tooltip_button').text ('show help');
+  }
+ }
+
+
+</script>
+</head>
+
+<body>
+  <p class="bet_time">roomCast 2.0</p>
+      <div id='wrapper' class="upper_right"><button id="tooltip_button" title="Click here to turn pop ups like this on or off. You can drag this button somewhere else if it's in your way." onclick="toggle_tooltips();" class="action_button">hide help</button></div>
+      <div id="shebang">
+   <div class="left">
+    <span title="Select a portal whose resources you want to configure." class="column_header">portals</span>
+    <ul class="list_ul" id='portals_list'></ul>
+  </div>
+  <div class="left">
+    <span  title="Select an activity whose resources you want to configure." class="column_header">activities</span>
+    <ul class="list_ul" id='activities_list'></ul>
+  </div>
+  <div class="left">
+    <span id='resource_header' title="Please select a portal and an activity in order to configure their resources." class="column_header">resources</span>
+    <ul class="list_ul" id='resources_list'></ul>
+  </div>
+</div>
+</body>
+</html>
+
+
+

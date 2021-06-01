@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="roomCast">
+  <title>clusters</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="roomcast_style.css">
+
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+
+  <style>
+   .right 
+  {
+      width: 1000px;
+  }
+
+  .form-checkbox
+{
+     -webkit-appearance: none;
+     -moz-appearance: none;
+     appearance: none;
+     display: inline-block;
+     position: relative;
+     background-color: white; 
+     color: #666;
+     top: 10px;
+     height: 30px;
+     width: 30px;
+     border: 0;
+     border-radius: 3px;
+     cursor: pointer;     
+     margin-right: 7px;
+     outline: none;
+     margin-top: -7px;
+}
+.form-checkbox:checked::before
+{
+     position: absolute;
+     font: 20px/1 'Open Sans', sans-serif, bold;
+     left: 9px;
+     top: 4px;
+     content: '\02143';
+     transform: rotate(40deg);
+}
+
+
+  </style>
+
+<script type="text/javascript">
+
+
+  query_parameters = NUTELLA.parseURLParameters();
+  nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+  var clusters =[];
+  var cluster;
+
+  // nutella.net.subscribe('new_cluster_introduced', function(message){location.reload(true);});
+
+  $(function () {
+
+    nutella.net.request('get_all_clusters_list',{},function(message){
+      clusters = message;
+      build_clusters_list();
+    })
+
+
+    // for roomcast_ and add_managers, make activity list sortable
+  })
+
+  function build_clusters_list(){
+    $('#list').empty();
+    $('#info').hide();
+    for (var i=0; i<clusters.length; i++) { 
+      var item = clusters[i];
+      var text = item;
+      if (item == 'AD-MIN') $('#list').append('<li hidden ><button class="notcurrent" name="' + item + '">' + text + '</button></li>');
+      // if (item.version != '') text += ' [' + item.version + ']';
+      else $('#list').append('<li><button class="notcurrent" name="' + item + '">' + text + '</button></li>');
+    }
+
+
+    $('#list li button').click(function(){ 
+        $('#list li button').attr('class', 'notcurrent');
+        $(this).attr('class','current');
+
+        // find the ID of the clicked activity
+        var selected_cluster = $(this).attr('name');
+        cluster = clusters.find(function(item){
+          return (selected_cluster == item)
+        });
+        $('#right_header').text(cluster);
+        show_info(cluster,'edit');
+    })
+  }
+
+
+  function show_info(cluster,type){
+
+    var c = cluster.split('-');
+    if (type == 'edit') {
+      $('#org').val(c[0]); $('#org').prop('readonly',true);
+      $('#cluster').val(c[1]); $('#cluster').prop('readonly',true);
+      $('#save_description,#delete_cluster').show();
+      $('#stop,#start').show();
+      $('#create_cluster,#cancel').hide(); $('#info').hide();
+      nutella.net.request('get_cluster_info_pw',cluster,function(message){
+        $('#contact').val(message.contact);
+        $('#description').val(message.description);
+        $('#pw').val(message.pw);
+        $('#alt_title').val(message.alt_title);
+        $('#shared').prop('checked',message.shared);
+        $('#archived').prop('checked',message.archived);
+        $('#shared').prop('disabled',true);
+        $('#info').show();
+      })
+    } else {
+      $('#stop,#start').hide();
+      $('#pw').val('');
+      $('#description').val(''); $('#org').val(''); $('#cluster').val(''); $('#contact').val('');$('#alt_title').val('');$('#shared').prop('checked',false);
+      $('#archived').prop('checked',false);
+      $('#org').prop('readonly',false);
+      $('#cluster').prop('readonly',false);
+      $('#shared').prop('disabled',false);
+      $('#save_description,#delete_cluster').hide();
+      $('#create_cluster,#cancel').show();
+      $('#info').show();
+    }
+  }
+
+  function cancel(){
+    $('#contact').val('');
+    $('#pw').val('');
+    $('#description').val('');
+    $('#org').val('');
+    $('#cluster').val('');
+    $('#info').hide();
+    // $('#alt_title').hide()
+    $('#shared').prop('checked',false);
+    $('#archived').prop('checked',false);
+    $('#right_header').html('&nbsp');
+
+  }
+
+  function add_cluster(){
+     show_info('','new');
+     $('#list li button').attr('class', 'notcurrent');
+     $('#right_header').text('new cluster');
+  }
+
+  function save_description(){ 
+    nutella.net.request('set_cluster_info_pw',{cluster:$('#org').val() + '-' + $('#cluster').val(),description:$('#description').val(),pw:$('#pw').val(),contact:$('#contact').val(),alt_title:$('#alt_title').val(),shared:$('#shared').prop('checked'),archived:$('#archived').prop('checked')},function(message){
+      ;
+    })
+  }
+
+  function delete_cluster(){ 
+    $('#right_header').html('&nbsp;');
+    nutella.net.request('delete_cluster',cluster,function(message){
+      var deleted_cluster_name = $('#org').val() + '-' + $('#cluster').val();
+      clusters = clusters.filter(function(item){return(item != deleted_cluster_name)});
+      build_clusters_list();
+    })
+  }
+
+  function create_cluster(){
+    if ($('#pw').val() == '') {top.show_message('You must specify a password.'); return;};
+    if ($('#org').val() == '') {top.show_message('You must specify an organization.'); return;};
+    if ($('#cluster').val() == '') {top.show_message('You must specify a cluster.'); return;};
+    if ($('#contact').val() == '') {top.show_message('You must specify a contact email address.'); return;};
+
+
+    var new_cluster = {cluster:$('#org').val() + '-' + $('#cluster').val(),description:$('#description').val(),pw:$('#pw').val(),contact:$('#contact').val(),alt_title:$('#alt_title').val(),shared:$('#shared').prop('checked'),archived:$('#archived').prop('checked')};
+    var dup_check = clusters.filter(function(item){return(item == new_cluster.cluster)});
+    if (dup_check.length != 0) {top.show_message('That cluster name is already in use. Please choose another.'); return;} ;            
+
+    nutella.net.request('create_cluster',new_cluster,function(message){
+        clusters.push(new_cluster.cluster); build_clusters_list(); $('#right_header').html('&nbsp;');
+    })
+  }
+
+  function validate(target){
+    target.value = target.value.replace(/\W/g, '');
+  }
+  
+  function stop_cluster_runs(){ 
+    nutella.net.request('stop_cluster_runs',cluster,function(){return;})
+
+  }
+
+// replace this function (comment out) when gugo's starter works
+
+  // function start_cluster_runs(){
+  //   var starters = 'Copy and paste to command line:\n\n';
+  //   nutella.net.request('get_all_section_names',cluster,function(message){
+  //     for (var i=0; i<message.length;i++) {
+  //       starters += 'nutella start ' + cluster + '-' + message[i] + '\n';
+  //     }
+  //     top.show_message(starters);
+  //   })
+  // }
+
+// uncomment when Gugo's starter works
+
+  function start_cluster_runs(){
+    var starters = 'These runs were started:\n\n';
+    nutella.net.request('get_all_section_names',cluster,function(message){
+      for (var i=0; i<message.length;i++) {
+        starters += cluster + '-' + message[i] + '\n';
+
+        // temporary pending gugo fix
+
+            top.show_message('This operation must presently be performed manually at the UNIX command line:\n\nnutella start '+ cluster + '-' + message[i]);
+
+        // nutella.net.request('execute_command',{command: "start", params: [cluster + '-' + message[i]]},function(message){
+        //   return;
+        // });
+      }
+      top.show_message(starters);
+    })
+  }
+
+</script>
+</head>
+
+<body>
+  <p class="bet_time">roomCast 2.0</p>
+  <div class="left">
+    <span class="column_header">clusters</span>
+    <ul class="list_ul" id='list'></ul>
+    <ul class="list_ul" >
+      <li>
+        <button class="action_button" id="add" onclick="add_cluster();">new cluster</button>
+      </li>
+    </ul>
+  </div>
+  <div class="right">
+    <span id='right_header' class="column_header">&nbsp;</span>
+    <ul>
+      <li>
+        <table hidden id="info">
+          <tr id="descriptionrow">
+            <td align=right> info </td>
+            <td align=left>
+              <textarea id="description" type="text" rows=10 class="data_entry">  </textarea>
+            </td>
+          </tr>
+          <tr id="alt_title_row">
+            <td align=right> title </td>
+            <td align=left>
+              <input id="alt_title" type="text" class="data_entry">
+            </td>
+          </tr>
+          <tr id="orgrow">
+            <td align=right> org </td>
+            <td align=left>
+              <input id="org" onpaste="validate(this);" onkeyup="validate(this);" type="text" class="data_entry">  
+            </td>
+          </tr>
+          <tr id="clusterrow">
+            <td align=right> cluster </td>
+            <td align=left>
+              <input id="cluster" onpaste="validate(this);" onkeyup="validate(this);" type="text" class="data_entry">  
+            </td>
+          </tr>
+          <tr id="roomrow">
+            <td align=right>  </td>
+            <td align=left>
+              <input type="checkbox" class='form-checkbox' id="shared"> shared room
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <input type="checkbox" class='form-checkbox' id="archived"> archived cluster
+            </td>
+          </tr>
+          <tr id="pwrow">
+            <td align=right> pw </td>
+            <td align=left>
+              <input id="pw" type="text" class="data_entry">  
+            </td>
+          </tr>
+          <tr id="contactrow">
+            <td align=right> contact </td>
+            <td align=left>
+              <input id="contact" type="text" class="data_entry">  
+            </td>
+          </tr>
+          <tr id="savedeleterow">
+            <td align=right>  </td>
+            <td align=center>
+              <button hidden id="save_description" class="action_button" onclick="save_description();" >save cluster</button>
+              <button hidden id="delete_cluster" class="action_button" onclick="delete_cluster();" >delete cluster</button>
+              <button hidden id="create_cluster" class="action_button" onclick="create_cluster();" >create cluster</button>
+              <button hidden id="cancel" class="action_button" onclick="cancel();" >cancel</button>
+              <button hidden id="stop" class="action_button" onclick="stop_cluster_runs();">stop cluster runs</button>
+              <button hidden id="start" class="action_button" onclick="start_cluster_runs();" >start cluster runs</button>
+
+
+            </td>
+          </tr>
+
+        </table>
+      </li>
+    </ul>
+  </div>
+
+</body>
+</html>
+
+
+

@@ -1,0 +1,275 @@
+
+
+:root {
+
+/* default styling */
+
+    --page_background: #374048;
+    --page_text: white;
+    --status_bar_text: #d3d8de;
+    --resource_bar_background: #9ba5b0;
+    --resource_bar_text: black;
+
+
+    --item_button_background: #d3d8de;
+    --item_button_text: black;
+    --item_button_border: var(--page_background);
+
+    --highlighted_item_button_background: black;
+    --highlighted_item_button_text: white;
+    --highlighted_item_button_border: white;
+ 
+    --action_button_background: var(--item_button_background);
+    --action_button_text: black;
+    --action_button_border: var(--action_button_background);
+
+    --active_action_button_background: black;
+    --active_action_button_text: white;
+    --active_action_button_border: var(--highlighted_action_button_background);
+
+    --disabled_action_button_background: lightgray;
+    --disabled_action_button_text: gray;
+    --disabled_action_button_border: var(--disabled_action_button_background);
+
+    --input_background: white;
+
+
+
+    --column_header_font_size: 20pt;
+    --left_div_width: 285px;
+    --right_div_width: 1000px;
+    --item_button_font_size: 15pt;
+    --action_button_font_size: 15pt;
+    --info_table_label_size: 18pt;
+    --info_table_cell_size: 15pt;
+    --info_table_left_col_width: 150px;
+
+
+}
+
+.bet_time {
+  color: darkgray;
+    position:absolute;
+    bottom:0;
+    right:0;
+    font-size: 150%;
+    font-style:italic;
+    margin-right: 30px;
+}
+
+
+body 
+{
+    background: var(--page_background);
+    color: var(--page_text);
+    font-family: "Arial";
+    overflow: auto;
+}
+
+.column_header
+{
+    font-size: var(--column_header_font_size);
+}
+
+/* by default, all buttons are "item" buttons */
+
+a
+{
+    cursor: pointer;
+}
+
+input[type=text], textarea
+{
+  background-color: var(--input_background); 
+  border: none; 
+}
+
+button 
+{
+    margin-bottom: 3px;
+    width: 200px;
+    border: 3px solid var(--item_button_border);
+    background-color: var(--item_button_background);
+    color: var(--item_button_text);
+    padding: 3px 0px;
+    font-size: var(--item_button_font_size);
+
+    /*box-shadow: none;*/
+}
+
+/* item buttons are current or non-current */
+
+.notcurrent 
+{
+    background-color: var(--item_button_background);
+    color: var(--item_button_text);
+    border: 2px var(--item_button_border);
+} 
+
+.current 
+{
+    background-color: var(--highlighted_item_button_background);
+    color: var(--highlighted_item_button_text);
+    border: 2px solid var(--highlighted_item_button_border);
+}
+
+.action_button 
+{
+    border-radius:1em;
+    margin-top: 10px;
+    width: 200px;
+    border: 2px solid var(--action_button_border);
+    background-color: var(--action_button_background);
+    color: var(--action_button_text);
+    padding: 3px 0px;
+    font-size: var(--action_button_font_size);
+    cursor: pointer;
+
+}
+
+.action_button:disabled 
+{
+    background-color: var(--disabled_action_button_background);
+    color: var(--disabled_action_button_text);
+    border: 2px solid var(--disabled_action_button_border);
+}
+
+.action_button:active
+{
+    background-color: var(--active_action_button_background);
+    color: var(--active_action_button_text);
+    border: 2px solid var(--active_action_button_border);
+}
+
+/* these two (poorly named) classes are used to achieve
+the side-by-side div setup used in most of the roomcast
+pages */
+
+.right {
+
+    text-align:center;
+    height:100%;
+    width: var(--right_div_width);
+}
+
+.left
+{
+    text-align:center;
+    float:left;
+    overflow:hidden;
+    height:100%;
+    width: var(--left_div_width);
+  }
+
+/* specific to the info table used in the right div of roomcast pages */
+
+table 
+{
+    margin-top: -6px;
+    width: 600px;
+    border-spacing: 20px 5px;
+    font-size: var(--info_table_label_size);
+}
+
+td input
+{
+    font-size: var(--info_table_cell_size);
+}
+
+td textarea
+{
+    font-size: var(--info_table_cell_size);
+}
+
+.label_col
+{
+    width: var(--info_table_left_col_width);
+}
+
+
+
+#savedeleterow td button
+{
+  /*font-size:80%;*/
+}
+
+.data_entry {
+  width:483px;
+}
+
+/*ul 
+{
+    width: 200px;
+    list-style: none;
+    max-height:600px;
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+*/
+.list_ul
+{
+    width: 200px;
+    list-style: none;
+    max-height:600px;
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+
+ul /* these uls are just used for alignment purposes */
+{
+    list-style: none;
+}
+
+/*#unitName {
+  color: var(--color3); float:left;
+}
+
+#brandName {
+  color: var(--color3); float:right;
+}
+*/
+
+select
+{
+  background-color: var(--page_background);
+  color: var(--status_bar_text);
+
+iframe { 
+border: none; 
+}
+
+.blankpage {
+  background: var(--color1);
+}
+
+#status_bar {
+  color: var(--status_bar_text);
+  /*position:relative;*/
+  padding:0;
+  /*margin:0;*/
+  overflow-x:auto;
+  overflow-y:hidden;
+  /*white-space: nowrap;*/
+
+
+}
+
+
+
+
+/*button {font-size: 1.2em;}*/
+/*textarea {font-size: 0.8em;}*/
+/*input {font-size: 0.8em;}*/
+
+/*#titleSlot {
+    display: block;
+    margin-top: 0;
+    margin-bottom: 3px;
+    margin-left: 0;
+    margin-right: 0;
+    color: white; 
+    text-align: center;
+    font-size: 150%;
+    font-family: sans-serif;"
+}
+*/

@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="roomCast">
+  <title>resources</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="roomcast_style.css">
+
+  <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="nutella_lib.js" type="text/javascript"></script>
+
+  <style>
+   .right 
+  {
+      width: 500px;
+  }
+
+
+
+  #preview
+  {
+      margin-left: 0px;
+       pointer-events: none;
+      border-style: solid;
+      border-color: white;
+      overflow: hidden;
+      margin-bottom: -590px;
+  }
+
+.form-checkbox
+{
+     -webkit-appearance: none;
+     -moz-appearance: none;
+     appearance: none;
+     display: inline-block;
+     position: relative;
+     background-color: white; 
+     color: #666;
+     top: 10px;
+     height: 30px;
+     width: 30px;
+     border: 0;
+     border-radius: 3px;
+     cursor: pointer;     
+     margin-right: 7px;
+     outline: none;
+     margin-top: -7px;
+}
+.form-checkbox:checked::before
+{
+     position: absolute;
+     font: 20px/1 'Open Sans', sans-serif, bold;
+     left: 9px;
+     top: 4px;
+     content: '\02143';
+     transform: rotate(40deg);
+}
+
+table {
+  margin-left: -120px;
+}
+
+span {
+  cursor: pointer;
+  background-color: transparent;
+}
+
+
+.upper_right {
+  color: darkgray;
+    position:absolute !important;
+    width: 0;
+    height: 0;
+    top:10px;
+    right:200px;
+    font-size: 150%;
+    font-style:italic;
+    margin-right: 30px;
+    z-index: 900;
+}
+
+.thumbnail {
+  position: relative;
+  -ms-zoom: 0.34;
+  -moz-transform: scale(0.34);
+  -moz-transform-origin: 0 0;
+  -o-transform: scale(0.34);
+  -o-transform-origin: 0 0;
+  -webkit-transform: scale(0.34);
+  -webkit-transform-origin: 0 0;
+}
+
+.thumbnail iframe {
+  width: 1440px;
+  height: 900px;
+}
+
+  </style>
+
+<script type="text/javascript">
+
+
+  query_parameters = NUTELLA.parseURLParameters();
+  nutella = NUTELLA.init(query_parameters.broker, query_parameters.app_id, query_parameters.run_id, NUTELLA.parseComponentId());
+
+
+  var roomcast_resources;
+  var app_resources;
+  var cluster_resources;
+  var my_resources;
+  var includes;
+  var repick = '';
+  var resource = {ID:-1,printName:'unknown'};
+
+  var current_selected_resource_ID = -1;
+
+
+  // pair this with showing new resource.
+  var blank; 
+
+
+  $(function () {
+
+  $("#wrapper").draggable({
+    cancel : '.no-drag'
+  });
+
+
+    $( document ).tooltip({
+      disabled: false
+    });
+
+
+    if (!(top.portal.type == 'system' || top.portal.type == 'application' || top.portal.type == 'designer' || top.portal.type == 'educator')) {
+      document.write("Resource unavailable for this portal.");
+      return;
+    };
+
+    if (top.portal.type == 'educator') $('#add').hide();
+
+    blank = top.build_URL({type:'roomcast',link:'blank.html',version:''}); 
+    // make local copies of appropriate resources, store in (global) my_resources
+
+    roomcast_resources = JSON.parse(JSON.stringify(top.roomcast_resources));
+    app_resources = JSON.parse(JSON.stringify(top.app_resources));
+    cluster_resources = JSON.parse(JSON.stringify(top.cluster_resources));
+    includes = JSON.parse(JSON.stringify(top.includes));
+
+    // build the resource list
+
+    build_resource_list();
+
+    // for roomcast_ and add_managers, make resource list sortable
+
+    if (top.portal.type == 'system' ||  top.portal.type == 'application')
+      $('#list').sortable({handle: 'button', cancel: '',
+        stop: function(event,ui){re_sort();}});
+
+    $('#include').change(function(){
+      if ($(this).prop('checked')) {
+        includes.push(Number($('#ID').val()));
+      } else {
+        var index_to_remove = includes.findIndex(function(item){
+          return (item == Number($('#ID').val()));
+        });
+        includes.splice(index_to_remove,1);
+      }
+      update_DB_includes();
+    })
+
+  })
+
+  function build_resource_list(){
+
+    switch (top.portal.type) {
+      case 'system': my_resources = roomcast_resources; break;
+      case 'application': my_resources = app_resources; break;
+      default:  my_resources = roomcast_resources.concat(app_resources).concat(cluster_resources);
+    }
+
+
+    $('#list').empty(); 
+    for (var i=0; i<my_resources.length; i++) {
+      var item = my_resources[i];
+      var text = item.printName;
+      var s = (item.ID == current_selected_resource_ID)? "current" : "notcurrent";
+      if (item.version != '') text += ' [' + item.version + ']';
+      if ((top.portal.type == 'educator' || top.portal.type == 'designer') && item.type == 'roomcast') 
+        // the last two conditions a hack to keep cluster and section resources out of the hands of designers
+        $('#list').append('<li hidden><button id="B'+ item.ID + '" class="' + s + '" name="' + item.ID + '">' + text + '</button></li>');
+      else
+        $('#list').append('<li><button id="B'+ item.ID + '" class="' + s + '" name="' + item.ID + '">' + text + '</button></li>');
+    }
+
+    // attach event handlers
+
+
+    $('#list li button').off('click');
+    $('#list li button').click(function(){ 
+        $('#list li button').attr('class', 'notcurrent');
+        $(this).attr('class','current');       
+        repick = $(this).attr('id'); 
+        current_selected_resource_ID = $(this).attr('name');
+        // find the ID of the clicked resource
+        resource = my_resources.find(function(item){
+          return (current_selected_resource_ID == item.ID)
+        });
+        show_info(resource);
+        show_preview(resource);
+        $('#preview').show();
+        $('#right_header').text(resource.printName);
+        $('#delete').show();
+        $('#cancel').hide();
+    })
+    // alert($('#' + repick).prop('name'));
+    // if (repick != '') $('#' + repick).click();
+
+    // if (selected_resource_ID != -1) alert('yo ' + $("button[name=1006]").attr('name'));
+
+    // if (selected_resource_ID != -1) $("button[name='1006']").attr('name').click();
+  }
+
+  function zap_preview(){ 
+    $('#preview').prop('src',blank);
+  }
+
+  function show_preview(resource){ 
+    var URL = top.build_URL(resource);
+    // alert ($('#preview').prop('src'));
+    // alert (URL);
+    if (top.strip_trailing_slash($('#preview').attr('src')) == top.strip_trailing_slash(URL)) return;
+    $('#preview').on('load',function(){
+      $('#preview').prop('src',URL);
+      $('#preview').off('load');
+    });
+    zap_preview();
+  }
+   
+  function is_on_includes_list(resource_id) {
+    return includes.includes(resource_id);
+  }
+
+  function show_info(resource){
+    $('#ID').val(resource.ID);
+    $('#include').prop('checked', includes.includes(resource.ID));
+    if (top.portal.type == 'system') $('#distribute_to_designer').prop('checked', resource.distribute);
+    $(':radio').prop('checked', false);
+    $('#' + resource.type).prop('checked',true);
+    $('#printName').val(resource.printName);
+    $('#link').val(resource.link);
+    $('#version').val(resource.version);
+    $('#description').val(resource.description);
+
+    // privileged links
+
+    switch(top.roomcast_portal().type){
+      case 'system':            
+        $('#labelrow,#versionrow,#linkrow,#savedeleterow,#descriptionrow,#distribute_to_designerrow').show();
+        $('#includerow').hide();
+        $('#description').removeAttr('readonly');
+        break;
+      case 'application':            
+        $('#labelrow,#versionrow,#linkrow,#savedeleterow,#descriptionrow').show();
+        $('#includerow,#distribute_to_designerrow').hide();
+        $('#description').removeAttr('readonly');
+        break;
+      case 'designer':
+        switch(resource.type){
+          case 'roomcast':
+            $('#descriptionrow').show();
+            $('#labelrow,#versionrow,#linkrow,#savedeleterow,#includerow,#distribute_to_designerrow').hide();
+            $('#description').prop('readonly','true');
+            break;
+          case 'app':
+            $('#descriptionrow,#includerow').show();
+            $('#labelrow,#versionrow,#linkrow,#savedeleterow,#distribute_to_designerrow').hide();
+            $('#description').prop('readonly','true');
+            break;
+          case 'cluster':
+            $('#descriptionrow,#includerow,#labelrow,#linkrow,#savedeleterow').show();
+            $('#versionrow,#distribute_to_designerrow').hide();
+            $('#description').removeAttr('readonly');
+        }
+        break;
+      case 'educator':            
+        $('descriptionrow').show();
+        $('#includerow,#labelrow,#versionrow,#linkrow,#savedeleterow,#distribute_to_designerrow').hide();
+        $('#description').prop('readonly','true');
+        break;
+    }
+    if (resource.link == 'dashboard.html' || resource.link == 'resources.html' || resource.link == 'about.html')
+      {$('#link').prop('readonly',true); $('#delete').prop('disabled',true);} 
+    else {$('#link').prop('readonly',false);$('#delete').prop('disabled',false);}
+
+    $('#info').show();
+  }
+
+  function re_sort(){
+    var temp_resources = [];
+    var these_resources;
+    if (top.portal.type == 'system') these_resources = roomcast_resources;
+    if (top.portal.type == 'application') these_resources = app_resources;
+    if (top.portal.type == 'designer') these_resources = cluster_resources;
+    for (var i=0; i<these_resources.length; i++){
+      var ID = $('#list li:eq(' + i + ') button').attr('name');
+      var resource = these_resources.find(function(item){
+        return (item.ID == ID);});      
+      temp_resources.push(resource);
+    }
+    if (top.portal.type == 'system') roomcast_resources = temp_resources;
+    if (top.portal.type == 'application') app_resources = temp_resources;
+    if (top.portal.type == 'system') cluster_resources = temp_resources;
+    my_resources = temp_resources;
+    update_DB_resources();
+  }
+
+
+
+  function save_resource(){ 
+    resource = {  ID: Number($('#ID').val()),
+                      type: $("input:radio[name='type']:checked").val(),
+                      // type: $(':checked').val(), // 
+                      printName: $('#printName').val(),
+                      link: $('#link').val(),
+                      version: $('#version').val(),
+                      description: $('#description').val()
+                    };
+    if (resource.printName == '') {top.show_message('The resource name cannot be blank.');return;}               
+    var dup_check = cluster_resources.filter(function(item){return(item.printName == resource.printName && item.ID != resource.ID)});
+    if (dup_check.length != 0) {top.show_message('That resource name is already in use. Please choose another.'); return;} ;            
+
+
+
+    $('#right_header').text(resource.printName);
+
+    if (top.portal.type == 'system') resource.distribute = $('#distribute_to_designer').prop('checked');
+
+    switch (top.portal.type) {
+      case 'system': 
+        var resource_index = roomcast_resources.findIndex(function(item){
+              return(item.ID == resource.ID);
+            }); 
+            if (resource_index == -1) {
+              roomcast_resources.push(resource);                
+              build_resource_list(); 
+              $('#list').animate({scrollTop:$('#list').height()}, 'slow');
+              $('#list li:last-child button').click();
+           }
+            else roomcast_resources[resource_index] = resource; 
+            break;
+      case 'application': 
+        var resource_index = app_resources.findIndex(function(item){
+              return(item.ID == resource.ID);
+            }); 
+            if (resource_index == -1) { 
+              app_resources.push(resource);                
+              build_resource_list(); 
+              $('#list').animate({scrollTop:$('#list').height()}, 'slow');
+              $('#list li:last-child button').click();
+           }
+            else app_resources[resource_index] = resource; 
+            break;
+      case 'designer': 
+        var resource_index = cluster_resources.findIndex(function(item){
+              return(item.ID == resource.ID);
+            }); 
+            if (resource_index == -1) {
+              cluster_resources.push(resource);                
+              build_resource_list(); 
+              $('#list').animate({scrollTop:$('#list').height()}, 'slow');
+              $('#list li:last-child button').click();
+            }
+            else cluster_resources[resource_index] = resource; 
+            break;
+    }
+    // build_resource_list();
+    // $('#list').animate({scrollTop:$('#list').height()}, 'slow');                
+
+    // // show_preview(resource);
+    // // // $('#list :eq(' + resource_index + ') button').attr('name',resource.printName);
+    // // // $('#list li[name="' + resource.ID + '"]').click();
+    // $('.current').html(resource.printName);
+    // // var temp = resource.printName;
+    // // if (resource.version != '') temp += ' [' + resource.version + ']';
+    // // $('.current').html(temp); 
+
+
+    // zap_preview();
+    // show_preview(resource);
+    // $('#preview').show();
+    update_DB_resources();
+    build_resource_list();                
+  }
+
+  function delete_resource(){ 
+    // if (!window.confirm("Are you sure?")) return;
+    if ($('#include').prop('checked')) $('#include').click();
+     switch (top.portal.type){
+      case 'system': 
+         var resource_index = roomcast_resources.findIndex(function(item){ return (item.ID == $('#ID').val());});      
+         roomcast_resources.splice(resource_index,1);
+         break;
+      case 'application':
+         var resource_index = app_resources.findIndex(function(item){ return (item.ID == $('#ID').val());});      
+         app_resources.splice(resource_index,1);
+         break;
+      case 'designer': 
+         var resource_index = cluster_resources.findIndex(function(item){ return (item.ID == $('#ID').val());});      
+         cluster_resources.splice(resource_index,1);
+         break;
+    }
+    resource = {ID:-1,printName:'unknown'};
+    build_resource_list();
+    $('#right_header').html('&nbsp;');
+
+    zap_preview();
+    $('#info').hide();
+    $('#preview').hide();
+    update_DB_resources();                
+  };
+
+  function add_resource(){
+    nutella.net.request('get_id',{},function(message){
+      var type = 'cluster';
+      if (top.portal.type == 'system') type = 'roomcast';
+      if (top.portal.type == 'application') type = 'app';
+      var new_resource =  {  ID: Number(message),
+                             type: type,
+                             printName: 'new resource',
+                             link: 'blank.html',
+                             version: '',
+                             description: ''
+                          };
+      if (top.portal.type == 'application') new_resource.link = 'blank';
+      if (top.portal.type == 'designer') new_resource.link = 'insert URL for external resource';
+
+      if (top.portal.type == 'system') new_resource.distribute = false;
+      // switch (top.portal.type){
+      //   case 'system': roomcast_resources.push(new_resource); break;
+      //   case 'application': app_resources.push(new_resource); break;
+      //   case 'designer': cluster_resources.push(new_resource); includes.push(new_resource.ID);break;
+      // }
+      // cluster_resources.push(new_resource);
+     //  build_resource_list();
+     //  update_DB_resources(); 
+     // $('#list').animate({scrollTop:$('#list').height()}, 'slow');                
+     //  $('#list :last-child button').click();
+      $('#list li button').attr('class', 'notcurrent');
+      show_info(new_resource);      
+      $('#printName').select();
+      zap_preview();
+      $('#preview').show();
+      $('#delete').hide();
+      $('#cancel').show();
+      $('#right_header').text('new resource');
+
+      resource = {ID:-1,printName:'unknown'};
+
+    });
+  }
+
+  nutella.net.subscribe('roomcast_resources_update',function(resources){
+    if (top.portal.type == "system") return;
+    roomcast_resources = resources;
+    $('#list').animate({scrollTop:$('#list').height()}, 'slow');
+    // build_resource_list();
+  })
+
+  nutella.net.subscribe('app_resources_update',function(resources){
+    if (top.portal.type == "application" || top.portal.type == "system") return;
+    app_resources = resources;
+    build_resource_list();
+    $('#list').animate({scrollTop:$('#list').height()}, 'slow');                
+
+    // $(':[name=1006]').prop('class','current');
+    // zap_preview(); $('#info').hide(); $('#preview').hide();
+   })
+
+
+  nutella.net.subscribe('cluster_resources_update',function(message){
+    if (top.portal.type == 'designer') return;
+    if (message.cluster != top.cluster_name) return;
+    cluster_resources = message.resources;
+    includes = message.includes;
+    build_resource_list();
+    $('#list').animate({scrollTop:$('#list').height()}, 'slow');                
+
+   })
+
+
+
+  function update_DB_resources(){ 
+    switch (top.portal.type) {
+
+      case 'system': nutella.net.request('set_roomcast_resources', my_resources, function(message){
+                if (message == 'fail') top.error ('attempt to update roomcast resources failed');
+              }); 
+              break;
+      case 'application': nutella.net.request('set_app_resources', my_resources, function(message){ 
+                if (message == 'fail') top.error ('attempt to update app resources failed');
+              }); 
+              break;
+      default:  
+                // var cluster_resources = my_resources.filter(function(item){return(item.type == 'cluster');});
+                // console.log(cluster_resources)
+                // nutella.net.publish('cluster_resource_update',{cluster:top.cluster,resources:cluster_resources,includes:includes});
+                nutella.net.request('set_cluster_resources', {cluster: top.cluster_name, resources:cluster_resources, includes:includes}, function(message){
+                  if (message == 'fail') top.error ('attempt to update cluster resources failed');
+                }); 
+    }
+  }
+
+  function update_DB_includes(){
+  
+    // nutella.net.publish('cluster_resource_update',{cluster:top.cluster,resources:my_resources,includes:includes});
+    // var cluster_resources = my_resources.filter(function(item){return(item.type == 'cluster');});
+    nutella.net.request('set_cluster_includes', {cluster: top.cluster_name, resources:cluster_resources, includes:includes}, function(message){
+      if (message == 'fail') top.error ('attempt to update cluster includes failed');
+    }); 
+  }
+
+  function cancel(){
+    $('#delete').show();
+    $('#info').hide();
+    $('#right_header').html('&nbsp;');
+    $('#preview').hide();
+  }
+
+ function toggle_tooltips(){
+  if($( document ).tooltip( "option", "disabled" )) {
+    $(document).tooltip("enable");
+    $('#tooltip_button').text ('hide help');
+  }
+  else {
+    $(document).tooltip("disable");
+    $('#tooltip_button').text ('show help');
+  }
+ }
+
+
+</script>
+</head>
+
+<body >
+  <p class="bet_time">roomCast 2.0</p>
+      <div id='wrapper' class="upper_right"><button id="tooltip_button" title="Click here to turn pop ups like this on or off. You can drag this button somewhere else if it's in your way." onclick="toggle_tooltips();" class="action_button">hide help</button></div>
+
+  <div class="left" style="float:left;">
+    <span class="column_header" title="This is the list of currently available resources. Choose one to view or edit, or define a new resource.">resources</span>
+
+    <ul class="list_ul"  id='list'></ul>
+    <ul class="list_ul" >
+      <li>    
+        <button class="action_button" id="add" title="Click here to define a new resource." onclick="add_resource();">new resource</button>
+      </li>
+    </ul>
+  </div>
+  <div class="right" style="float:left;">
+    <span id='right_header' style="margin-left: 35px;" title="This is a preview of your resource." class="column_header">&nbsp;</span>
+    <ul>
+      <li>    <div class='thumbnail'>
+        <iframe hidden id='preview' src=""></iframe></div>
+
+        <table hidden id="info">
+          <tr hidden>
+            <td align=right> ID </td>
+            <td align=left>
+              <input id="ID" type="text" class="data_entry"> 
+            </td>
+          </tr>
+          <tr hidden>
+            <td align=right> type </td>
+            <td align=left>
+              <input type="radio" name="type" id="roomcast" value="roomcast"> roomcast
+              <input type="radio" name="type" id="app" value="app"> application 
+              <input type="radio" name="type" id="cluster" value="cluster"> cluster 
+            </td>
+          </tr>
+          <tr id="includerow">
+            <td align=right>  </td>
+            <td align=left>
+              <input type="checkbox" class='form-checkbox' id="include"> <span title="Check this box if you want this resource to be available for use in the distribution plan.">include in distribution</span>
+            </td>
+          </tr>
+          <tr id="distribute_to_designerrow">
+            <td align=right>  </td>
+            <td align=left>
+              <input type="checkbox" class='form-checkbox' id="distribute_to_designer"> distribute to designer
+            </td>
+          </tr>
+          <tr id="descriptionrow">
+            <td align=right> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span title="Use this field to provide a description of your resource. Pre-defined resources are already described.">info </span></td>
+            <td align=left>
+              <textarea id="description" type="text" rows=7 class="data_entry">  </textarea>
+            </td>
+          </tr>
+          <tr id="labelrow">
+            <td align=right> <span title="Use this field to provide a label for your resource.">label</span> </td>
+            <td align=left>
+              <input id="printName" type="text" class="data_entry">  
+            </td>
+          </tr>
+          <tr id="linkrow">
+            <td align=right> <span title="Use this field to specify the full URL of your resource. Be sure to include the 'http://' or 'https://' portion of the URL.">link</span> </td>
+            <td align=left>
+              <input id="link" type="text" class="data_entry">  
+            </td>
+          </tr>
+          <tr id="versionrow">
+            <td align=right> version </td>
+            <td align=left>
+              <input id="version" type="text" class="data_entry" >  
+            </td>
+          </tr>
+          <tr id="savedeleterow">
+            <td align=right>  </td>
+            <td align=center>
+              <button id="save" class="action_button"  onclick="save_resource();" > save resource </button>
+              <button id="delete" class="action_button" onclick="delete_resource();" > delete resource </button>
+              <button id="cancel" class="action_button" onclick="cancel();" > cancel </button>
+            </td>
+          </tr>
+
+        </table>
+      </li>
+    </ul>
+  </div>
+
+</body>
+</html>
+
+
+
